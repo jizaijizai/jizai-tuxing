@@ -483,6 +483,41 @@
             } else { displayTitle.innerText = "点击 ➕ 导入"; }
         });
 
+        // --- 新增：多种爱心颜色贴图库及手势状态变量 ---
+        function createHeartTexture(color1, color2) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 64; canvas.height = 64;
+            const ctx = canvas.getContext('2d');
+            ctx.beginPath();
+            ctx.moveTo(32, 16);
+            ctx.bezierCurveTo(32, 12, 24, 0, 14, 0);
+            ctx.bezierCurveTo(0, 0, 0, 22, 0, 22);
+            ctx.bezierCurveTo(0, 36, 16, 46, 32, 60);
+            ctx.bezierCurveTo(48, 46, 64, 36, 64, 22);
+            ctx.bezierCurveTo(64, 22, 64, 0, 50, 0);
+            ctx.bezierCurveTo(40, 0, 32, 12, 32, 16);
+            const grad = ctx.createRadialGradient(32, 32, 5, 32, 32, 30);
+            grad.addColorStop(0, color1);
+            grad.addColorStop(1, color2);
+            ctx.fillStyle = grad;
+            ctx.fill();
+            return new THREE.CanvasTexture(canvas);
+        }
+
+        const heartColors = [
+            ['#ff9999', '#ff3333'], // 粉红/红
+            ['#99ccff', '#3366ff'], // 浅蓝/深蓝
+            ['#ffcc99', '#ff9933'], // 浅橙/深橙
+            ['#cc99ff', '#9933ff'], // 浅紫/深紫
+            ['#99ff99', '#33cc33'], // 浅绿/深绿
+            ['#ffff99', '#ffcc00'], // 浅黄/深黄
+            ['#ff99cc', '#ff3399']  // 玫瑰/玫红
+        ];
+        
+        const heartTextures = heartColors.map(colors => createHeartTexture(colors[0], colors[1]));
+        let isHeartGesture = false; 
+        // ----------------------------------------
+
         const customAsteroids = [];
         const MAX_ASTEROIDS = 100; // 优化项3：限制小行星最大数量
 
@@ -502,6 +537,10 @@
                     particles.remove(oldAst);
                     if (oldAst.userData.label && oldAst.userData.label.parentNode) {
                         oldAst.userData.label.parentNode.removeChild(oldAst.userData.label);
+                    }
+                    if (oldAst.userData.heartPoints) {
+                        oldAst.userData.heartPoints.geometry.dispose();
+                        oldAst.userData.heartPoints.material.dispose();
                     }
                     oldAst.material.dispose();
                     oldAst.geometry.dispose();
@@ -532,6 +571,32 @@
                     speed: speed,
                     label: label
                 };
+
+                // --- 新增：为每个小行星附加隐形的爱心特效粒子系统，随机选取一个专属颜色贴图 ---
+                const randomHeartTex = heartTextures[Math.floor(Math.random() * heartTextures.length)];
+                const hGeo = new THREE.BufferGeometry();
+                const hCount = 20;
+                const hPos = new Float32Array(hCount * 3);
+                const hVels = [];
+                for(let i=0; i<hCount; i++) {
+                    hPos[i*3] = 0; hPos[i*3+1] = 0; hPos[i*3+2] = 0;
+                    hVels.push({ 
+                        vx: (Math.random()-0.5)*0.08, 
+                        vy: Math.random()*0.04 + 0.02, // 调整：降低爱心向上的浮动速度
+                        vz: (Math.random()-0.5)*0.08, 
+                        life: Math.random() 
+                    });
+                }
+                hGeo.setAttribute('position', new THREE.BufferAttribute(hPos, 3));
+                const hMat = new THREE.PointsMaterial({ 
+                    map: randomHeartTex, size: 2.0, transparent: true, opacity: 0, 
+                    depthWrite: false, blending: THREE.AdditiveBlending 
+                });
+                const hPoints = new THREE.Points(hGeo, hMat);
+                mesh.add(hPoints);
+                mesh.userData.heartPoints = hPoints;
+                mesh.userData.heartVels = hVels;
+                // ---------------------------------------------------
                 
                 // 成为粒子集的子层级，继承其 modelMatrix 的自转轴(rotation.z = 0.466)
                 particles.add(mesh); 
@@ -733,6 +798,36 @@
                 } else {
                     ast.userData.label.style.opacity = 0;
                 }
+
+                // --- 新增：处理比心手势时的动态粒子特效逻辑 ---
+                if (ast.userData.heartPoints) {
+                    const hPoints = ast.userData.heartPoints;
+                    const hVels = ast.userData.heartVels;
+                    const posAttr = hPoints.geometry.attributes.position;
+                    const positions = posAttr.array;
+                    
+                    if (isHeartGesture) {
+                        hPoints.material.opacity = Math.min(1.0, hPoints.material.opacity + 0.05);
+                        for(let i=0; i<hVels.length; i++) {
+                            // 调整：降低循环重置的递增量，减慢整体冒出的频率
+                            hVels[i].life += 0.008; 
+                            if (hVels[i].life > 1.0) {
+                                hVels[i].life = 0;
+                                positions[i*3] = 0;
+                                positions[i*3+1] = 0;
+                                positions[i*3+2] = 0;
+                            } else {
+                                positions[i*3] += hVels[i].vx;
+                                positions[i*3+1] += hVels[i].vy;
+                                positions[i*3+2] += hVels[i].vz;
+                            }
+                        }
+                        posAttr.needsUpdate = true;
+                    } else {
+                        hPoints.material.opacity = Math.max(0.0, hPoints.material.opacity - 0.05);
+                    }
+                }
+                // ------------------------------------------------
             });
 
             renderer.render(scene, camera);
@@ -755,7 +850,13 @@
                     const d = Math.sqrt((h[4].x-h[8].x)**2 + (h[4].y-h[8].y)**2);
                     targetScale = 0.15 + Math.max(0, Math.min(1, (d - 0.02) / 0.25)) * 2.35;
                     targetRotX = -0.6 + Math.max(0, Math.min(1, (h[9].y - 0.1) / 0.8)) * 1.6;
-                } else isHandDetected = false;
+
+                    // --- 新增：检测拇指与食指捏合，且中指弯曲（y坐标低于关节）的情况作为“比心”判定 ---
+                    isHeartGesture = (d < 0.06 && h[12].y > h[10].y && h[16].y > h[14].y);
+                } else {
+                    isHandDetected = false;
+                    isHeartGesture = false; // --- 新增：没有检测到手时重置比心状态 ---
+                }
             });
 
             const cam = new Camera(videoElement, {onFrame: async () => await hands.send({image: videoElement}), width: 640, height: 480});
