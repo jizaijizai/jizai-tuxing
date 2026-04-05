@@ -98,7 +98,6 @@
         .song-title { font-weight: bold; letter-spacing: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 140px; }
         .song-time { font-size: 0.65rem; color: #888; font-family: monospace; margin-top: 2px; }
 
-        /* 修改：增加 display: flex 和 gap 以排版新增的按钮 */
         #controls {
             position: absolute; bottom: 40px; right: 40px; z-index: 50;
             pointer-events: auto; transition: all 0.3s ease;
@@ -137,7 +136,6 @@
         #fps-counter { position: absolute; top: 10px; right: 10px; font-size: 10px; font-family: monospace; color: #444; z-index: 5; }
         .input_video { display: none; }
 
-        /* 新增：小行星悬浮文字标签样式 */
         .asteroid-label {
             position: absolute; top: 0; left: 0; z-index: 60;
             color: #e0cda7; background: rgba(0, 0, 0, 0.6);
@@ -170,7 +168,7 @@
 </head>
 <body>
 
-    <video class="input_video"></video>
+    <video class="input_video" autoplay playsinline muted></video>
     
     <a id="author-btn" href="https://jizaijizai.github.io" target="_blank" onclick="safeOpenLink(event)">About</a>
 
@@ -409,7 +407,6 @@
             } else { displayTitle.innerText = "点击 ➕ 导入"; }
         });
 
-        // ================= 新增：小行星逻辑区 =================
         const customAsteroids = [];
 
         function addCustomAsteroid() {
@@ -421,39 +418,33 @@
             const text = prompt("为您的小行星设置一段专属文字:", "✨ 专属小行星");
             if (!text) return;
             
-            // 计算随机轨道位置（散布在土星环 B1 到 A 环之间）
             const R = 18;
             const rr = R * (1.6 + Math.random() * 0.6); 
             const th = Math.random() * Math.PI * 2;
-            const speed = 8.0 / Math.sqrt(rr); // 完美同步 Shader 中的轨道速度计算
+            const speed = 8.0 / Math.sqrt(rr); 
             
-            // 构建带发光感的小行星 Mesh
             const geo = new THREE.IcosahedronGeometry(0.6, 0);
             const mat = new THREE.MeshBasicMaterial({ color: 0xc5a059, wireframe: true, transparent: true, opacity: 0.9 });
             const mesh = new THREE.Mesh(geo, mat);
             
-            // 创建跟随其上的 HTML 标签
             const label = document.createElement('div');
             label.className = 'asteroid-label';
             label.innerText = text;
             document.body.appendChild(label);
             
-            // 保存基础几何状态以配合手势及Shader轨道变换
             mesh.userData = {
                 basex: rr * Math.cos(th),
-                basey: (Math.random() - 0.5) * 0.2, // Y轴轻微浮动
+                basey: (Math.random() - 0.5) * 0.2, 
                 basez: rr * Math.sin(th),
                 speed: speed,
                 label: label
             };
             
-            // 成为粒子集的子层级，继承其 modelMatrix 的自转轴(rotation.z = 0.466)
             particles.add(mesh); 
             customAsteroids.push(mesh);
             
             alert("✅ 小行星注入成功！\n请通过手势放大画面，即可在土星光环带上观察到它。");
         }
-        // =======================================================
 
 
         // 3D 核心
@@ -614,37 +605,30 @@
             currentScale += (targetScale - currentScale) * 0.08; currentRotX += (targetRotX - currentRotX) * 0.08;
             uniforms.uScale.value = currentScale; uniforms.uRotationX.value = currentRotX;
             
-            // ================= 新增：实时同步小行星矩阵与 UI 渲染 =================
             customAsteroids.forEach(ast => {
-                // 1. 同步 Shader 内的光环 Y 轴公转偏角计算
                 let angle = et * ast.userData.speed * 0.2;
                 let x = Math.cos(angle) * ast.userData.basex - Math.sin(angle) * ast.userData.basez;
                 let z = Math.sin(angle) * ast.userData.basex + Math.cos(angle) * ast.userData.basez;
                 let y = ast.userData.basey;
                 
-                // 2. 同步 Shader 内的 X 轴手势倾斜计算
                 let cx = Math.cos(currentRotX), sx = Math.sin(currentRotX);
                 let ry = y * cx - z * sx;
                 let rz = y * sx + z * cx;
                 
-                // 3. 赋予矩阵，将 uScale 同样叠加
                 ast.position.set(x * currentScale, ry * currentScale, rz * currentScale);
                 ast.scale.setScalar(currentScale); 
                 
-                // 4. 当手势拉大视角（currentScale > 1.5）时浮现名字标签
                 if (currentScale > 1.5) {
                     ast.updateMatrixWorld();
                     let vec = new THREE.Vector3();
                     vec.setFromMatrixPosition(ast.matrixWorld);
                     vec.project(camera);
                     
-                    // 防遮挡（绕到镜头后方时隐藏）
                     if (vec.z > 1.0 || vec.z < -1.0) {
                         ast.userData.label.style.opacity = 0;
                     } else {
                         let screenX = (vec.x * 0.5 + 0.5) * window.innerWidth;
                         let screenY = -(vec.y * 0.5 - 0.5) * window.innerHeight;
-                        // 通过 translate 跟随坐标原点，并略微向上方偏移防遮挡行星本身
                         ast.userData.label.style.transform = `translate(-50%, -100%) translate(${screenX}px, ${screenY - 20}px)`;
                         ast.userData.label.style.opacity = 1;
                     }
@@ -652,7 +636,6 @@
                     ast.userData.label.style.opacity = 0;
                 }
             });
-            // ====================================================================
 
             renderer.render(scene, camera);
         }
