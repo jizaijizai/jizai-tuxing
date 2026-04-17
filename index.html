@@ -422,6 +422,13 @@
         const inputModeEl = document.getElementById('input-mode');
         let isMinimized = false; let wasPlayingBeforeHide = false; 
 
+        // 新增：页面加载 1.5 秒后，如果音乐没在播放，就弹出“点击开启音乐”的提示
+        setTimeout(() => {
+            if (bgm.paused) {
+                musicToast.classList.add('show');
+            }
+        }, 1500); 
+
         function safeOpenLink(event) {
             if (document.fullscreenElement) {
                 event.preventDefault();
@@ -475,7 +482,18 @@
         function playPrev() { loadSong(currentSongIndex - 1); bgm.play().then(() => updatePlayStatus(true)).catch(() => updatePlayStatus(false)); }
         function toggleMusic() { if (activePlaylist.length === 0) return; if (bgm.paused) { bgm.play(); updatePlayStatus(true); } else { bgm.pause(); updatePlayStatus(false); } }
         function updatePlayStatus(isPlaying) { displayTitle.style.color = isPlaying ? "#fff" : "#c5a059"; }
-        function forcePlayMusic() { bgm.play(); updatePlayStatus(true); musicToast.classList.remove('show'); }
+        function forcePlayMusic() { 
+            // 新增：如果播放器还没加载源文件，先加载列表的第一首歌
+            if (!bgm.getAttribute('src')) {
+                loadSong(0);
+            }
+            bgm.play().then(() => {
+                updatePlayStatus(true); 
+                musicToast.classList.remove('show'); 
+            }).catch(e => {
+                customToast("⚠️ 播放失败，请检查音乐路径");
+            });
+        }
         function formatTime(s) { if(isNaN(s)) return "00:00"; return `${Math.floor(s/60).toString().padStart(2,'0')}:${Math.floor(s%60).toString().padStart(2,'0')}`; }
         bgm.addEventListener('timeupdate', () => { if(bgm.duration) displayTime.innerText = formatTime(bgm.currentTime); });
         bgm.addEventListener('ended', playNext); 
