@@ -404,7 +404,10 @@
             if (obj.children) obj.children.forEach(child => deepDisposeObject(child));
         }
 
-        const defaultPlaylist = [ "./music/take me hand.mp3" ];
+        const defaultPlaylist = [ 
+        "./music/take me hand.mp3",
+        "./music/鲸.mp3"
+         ];
         let activePlaylist = [...defaultPlaylist];
         let currentSongIndex = 0;
         const bgm = new Audio();
