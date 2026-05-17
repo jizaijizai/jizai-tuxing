@@ -12,195 +12,70 @@
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
 
     <style>
-        body {
-            margin: 0;
-            overflow: hidden;
-            background-color: #000;
-            font-family: 'Microsoft YaHei', 'Segoe UI', sans-serif;
-            color: white;
-            touch-action: none;
-            user-select: none;
-            -webkit-user-select: none;
-        }
+        body { margin: 0; overflow: hidden; background-color: #000; font-family: 'Microsoft YaHei', 'Segoe UI', sans-serif; color: white; touch-action: none; user-select: none; -webkit-user-select: none; }
+        #canvas-container { width: 100vw; height: 100vh; position: absolute; top: 0; left: 0; z-index: 1; background: radial-gradient(circle at center, #050505 0%, #0b0b10 100%); }
 
-        #canvas-container {
-            width: 100vw; height: 100vh;
-            position: absolute; top: 0; left: 0; z-index: 1;
-            background: radial-gradient(circle at center, #050505 0%, #0b0b10 100%);
-        }
-
-        #ui-layer {
-            position: absolute; top: 30px; left: 30px; z-index: 10; pointer-events: none;
-            transition: all 0.3s ease;
-        }
-        .glass-panel {
-            background: rgba(5, 5, 5, 0.7);
-            backdrop-filter: blur(12px);
-            padding: 24px;
-            border-radius: 2px;
-            border-left: 2px solid #c5a059;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.9);
-            max-width: 280px;
-        }
-        h1 {
-            font-weight: 200; font-size: 1.8rem; margin: 0 0 10px 0;
-            color: #e0cda7; letter-spacing: 4px; text-transform: uppercase;
-        }
+        #ui-layer { position: absolute; top: 30px; left: 30px; z-index: 10; pointer-events: none; transition: all 0.3s ease; }
+        .glass-panel { background: rgba(5, 5, 5, 0.7); backdrop-filter: blur(12px); padding: 24px; border-radius: 2px; border-left: 2px solid #c5a059; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.9); max-width: 320px; }
+        h1 { font-weight: 200; font-size: 1.8rem; margin: 0 0 10px 0; color: #e0cda7; letter-spacing: 4px; text-transform: uppercase; }
         .status-text { font-size: 0.85rem; color: #888; line-height: 1.6; font-family: monospace; }
         .highlight { color: #c5a059; font-weight: bold; }
 
-        #author-btn {
-            position: absolute; top: 40px; right: 40px; z-index: 20;
-            pointer-events: auto; text-decoration: none; color: #c5a059;
-            border: 1px solid rgba(197, 160, 89, 0.4);
-            background: rgba(0, 0, 0, 0.6);
-            padding: 8px 20px; font-size: 0.8rem; border-radius: 20px;
-            transition: all 0.3s ease; backdrop-filter: blur(4px);
-            letter-spacing: 1px; font-family: monospace;
-        }
+        #author-btn { position: absolute; top: 40px; right: 40px; z-index: 20; pointer-events: auto; text-decoration: none; color: #c5a059; border: 1px solid rgba(197, 160, 89, 0.4); background: rgba(0, 0, 0, 0.6); padding: 8px 20px; font-size: 0.8rem; border-radius: 20px; transition: all 0.3s ease; backdrop-filter: blur(4px); letter-spacing: 1px; font-family: monospace; }
 
-        #music-controls {
-            position: absolute; bottom: 40px; left: 40px; z-index: 50;
-            pointer-events: auto; display: flex; align-items: center;
-            background: rgba(0, 0, 0, 0.4); padding: 8px;
-            border-radius: 50px; backdrop-filter: blur(8px);
-            border: 1px solid rgba(197, 160, 89, 0.3);
-            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
-        }
-        #music-controls.minimized {
-            padding: 8px; border-color: rgba(197, 160, 89, 0.6);
-            background: rgba(197, 160, 89, 0.15); box-shadow: 0 0 20px rgba(197, 160, 89, 0.2);
-        }
-        #player-content {
-            display: flex; align-items: center; gap: 8px;
-            overflow: hidden; max-width: 500px; opacity: 1; margin-left: 10px;
-            transition: all 0.5s ease;
-        }
+        #music-controls { position: absolute; bottom: 40px; left: 40px; z-index: 50; pointer-events: auto; display: flex; align-items: center; background: rgba(0, 0, 0, 0.4); padding: 8px; border-radius: 50px; backdrop-filter: blur(8px); border: 1px solid rgba(197, 160, 89, 0.3); transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+        #music-controls.minimized { padding: 8px; border-color: rgba(197, 160, 89, 0.6); background: rgba(197, 160, 89, 0.15); box-shadow: 0 0 20px rgba(197, 160, 89, 0.2); }
+        #player-content { display: flex; align-items: center; gap: 8px; overflow: hidden; max-width: 500px; opacity: 1; margin-left: 10px; transition: all 0.5s ease; }
         #music-controls.minimized #player-content { max-width: 0; opacity: 0; margin-left: 0; pointer-events: none; }
-
-        .control-btn, #toggle-player-btn {
-            background: transparent; border: none; color: #c5a059;
-            width: 32px; height: 32px; border-radius: 50%;
-            cursor: pointer; font-size: 1.1rem;
-            display: flex; align-items: center; justify-content: center;
-            transition: all 0.2s ease;
-        }
+        .control-btn, #toggle-player-btn { background: transparent; border: none; color: #c5a059; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease; }
         .folder-btn { border-right: 1px solid rgba(197, 160, 89, 0.2); border-radius: 0; margin-right: 5px; width: 36px; }
-
-        #music-display {
-            background: transparent; color: #c5a059; padding: 0 10px;
-            font-size: 0.8rem; min-width: 140px; text-align: center;
-            cursor: pointer; transition: all 0.3s ease;
-            display: flex; flex-direction: column; justify-content: center;
-            height: 36px; border-radius: 4px;
-        }
+        #music-display { background: transparent; color: #c5a059; padding: 0 10px; font-size: 0.8rem; min-width: 140px; text-align: center; cursor: pointer; transition: all 0.3s ease; display: flex; flex-direction: column; justify-content: center; height: 36px; border-radius: 4px; }
         .song-title { font-weight: bold; letter-spacing: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 140px; }
         .song-time { font-size: 0.65rem; color: #888; font-family: monospace; margin-top: 2px; }
 
-        #controls {
-            position: absolute; bottom: 40px; right: 40px; z-index: 50;
-            pointer-events: auto; transition: all 0.3s ease;
-            display: flex; gap: 10px; 
-        }
-        button.fullscreen-btn {
-            background: rgba(0,0,0,0.3); border: 1px solid rgba(197, 160, 89, 0.3);
-            color: #c5a059; padding: 12px 30px; font-size: 0.8rem;
-            cursor: pointer; transition: all 0.4s ease;
-            text-transform: uppercase; letter-spacing: 2px;
-            backdrop-filter: blur(4px);
-        }
-        
+        #controls { position: absolute; bottom: 40px; right: 40px; z-index: 50; pointer-events: auto; transition: all 0.3s ease; display: flex; gap: 10px; }
+        button.fullscreen-btn { background: rgba(0,0,0,0.3); border: 1px solid rgba(197, 160, 89, 0.3); color: #c5a059; padding: 12px 30px; font-size: 0.8rem; cursor: pointer; transition: all 0.4s ease; text-transform: uppercase; letter-spacing: 2px; backdrop-filter: blur(4px); }
         .mobile-icon { display: none; }
 
-        #loading {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            z-index: 100; text-align: center; color: #e0cda7;
-            font-size: 0.9rem; letter-spacing: 3px; text-transform: uppercase;
-            text-shadow: 0 0 10px rgba(0,0,0,0.8);
-            pointer-events: none;
-            transition: opacity 0.5s ease;
-        }
-
-        #music-toast {
-            position: absolute; top: 100px; left: 50%; transform: translateX(-50%);
-            z-index: 60; background: rgba(197, 160, 89, 0.15);
-            border: 1px solid rgba(197, 160, 89, 0.4); color: #e0cda7;
-            padding: 10px 25px; border-radius: 30px; backdrop-filter: blur(8px);
-            font-size: 0.9rem; white-space: nowrap; letter-spacing: 2px;
-            cursor: pointer; opacity: 0; pointer-events: none;
-            transition: all 0.5s ease; box-shadow: 0 0 20px rgba(197, 160, 89, 0.2);
-        }
+        #loading { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 100; text-align: center; color: #e0cda7; font-size: 0.9rem; letter-spacing: 3px; text-transform: uppercase; text-shadow: 0 0 10px rgba(0,0,0,0.8); pointer-events: none; transition: opacity 0.5s ease; }
+        #music-toast { position: absolute; top: 100px; left: 50%; transform: translateX(-50%); z-index: 60; background: rgba(197, 160, 89, 0.15); border: 1px solid rgba(197, 160, 89, 0.4); color: #e0cda7; padding: 10px 25px; border-radius: 30px; backdrop-filter: blur(8px); font-size: 0.9rem; white-space: nowrap; letter-spacing: 2px; cursor: pointer; opacity: 0; pointer-events: none; transition: all 0.5s ease; box-shadow: 0 0 20px rgba(197, 160, 89, 0.2); }
         #music-toast.show { opacity: 1; pointer-events: auto; top: 120px; }
-
         #fps-counter { position: absolute; top: 10px; right: 10px; font-size: 10px; font-family: monospace; color: #444; z-index: 5; }
         .input_video { display: none; }
 
-        .asteroid-label {
-            position: absolute; top: 0; left: 0; z-index: 60;
-            color: #e0cda7; background: rgba(0, 0, 0, 0.6);
-            border: 1px solid rgba(197, 160, 89, 0.6);
-            padding: 5px 12px; border-radius: 4px;
-            font-size: 12px; letter-spacing: 2px;
-            pointer-events: none; opacity: 0;
-            transition: opacity 0.3s ease; white-space: nowrap;
-            backdrop-filter: blur(4px); box-shadow: 0 0 10px rgba(0,0,0,0.5);
-            transform-origin: center bottom;
-        }
-
-        /* 新增：弹幕样式 */
-        .danmaku-item {
-            position: absolute; right: -300px;
-            color: #e0cda7; font-size: 16px; font-weight: bold;
-            letter-spacing: 2px; white-space: nowrap;
-            text-shadow: 0 0 15px rgba(197, 160, 89, 0.9);
-            z-index: 1000; animation: danmakuFly 6s linear forwards;
-            pointer-events: none; padding: 8px 20px;
-            background: rgba(0, 0, 0, 0.5); border-radius: 20px;
-            border: 1px solid rgba(197, 160, 89, 0.5); backdrop-filter: blur(4px);
-        }
+        .asteroid-label { position: absolute; top: 0; left: 0; z-index: 60; color: #e0cda7; background: rgba(0, 0, 0, 0.6); border: 1px solid rgba(197, 160, 89, 0.6); padding: 5px 12px; border-radius: 4px; font-size: 12px; letter-spacing: 2px; pointer-events: none; opacity: 0; transition: opacity 0.3s ease; white-space: nowrap; backdrop-filter: blur(4px); box-shadow: 0 0 10px rgba(0,0,0,0.5); transform-origin: center bottom; }
+        .danmaku-item { position: absolute; right: -300px; color: #e0cda7; font-size: 16px; font-weight: bold; letter-spacing: 2px; white-space: nowrap; text-shadow: 0 0 15px rgba(197, 160, 89, 0.9); z-index: 1000; animation: danmakuFly 6s linear forwards; pointer-events: none; padding: 8px 20px; background: rgba(0, 0, 0, 0.5); border-radius: 20px; border: 1px solid rgba(197, 160, 89, 0.5); backdrop-filter: blur(4px); }
         @keyframes danmakuFly { to { right: 110vw; } }
 
+        /* 抽奖系统核心 UI */
+        #lottery-exit-hint { display: none; position: absolute; top: 15px; left: 0; width: 100%; text-align: center; color: rgba(255, 255, 255, 0.5); font-size: 14px; z-index: 9999; pointer-events: none; letter-spacing: 4px; text-shadow: 0 0 10px rgba(0,0,0,0.8); }
+        #lottery-copy-text { display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #4fa3ff; font-size: 26px; text-align: center; width: 85%; text-shadow: 0 0 20px rgba(79, 163, 255, 0.8); z-index: 1000; white-space: pre-wrap; word-wrap: break-word; pointer-events: none; line-height: 1.6; font-weight: bold; }
+        #lottery-result-container { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1001; }
+        .lottery-title { position: absolute; top: 15%; left: 50%; transform: translateX(-50%); color: #e0cda7; font-size: 24px; letter-spacing: 6px; text-shadow: 0 0 15px rgba(197, 160, 89, 0.8); font-weight: 300; }
+        .lottery-main-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #4fa3ff; font-size: 40px; text-shadow: 0 0 30px rgba(79, 163, 255, 1); font-weight: bold; text-align: center; width: 90%; word-break: break-all; }
+        .lottery-sub-text { position: absolute; color: #e0cda7; font-size: 20px; text-shadow: 0 0 15px rgba(197, 160, 89, 0.9); font-style: italic; white-space: pre-wrap; line-height: 1.4; }
+
         @media (max-width: 768px) {
-            #ui-layer { top: 15px; left: 15px; }
-            .glass-panel { padding: 12px; max-width: 180px; }
-            h1 { font-size: 1.2rem; }
-            .status-text { font-size: 0.65rem; }
-            #author-btn { top: 15px; right: 15px; padding: 5px 12px; font-size: 0.7rem; }
-            #fps-counter { display: none; }
-            #music-controls { bottom: 20px; left: 15px; padding: 5px; }
-            .control-btn, #toggle-player-btn, .folder-btn { width: 30px; height: 30px; font-size: 1rem; }
-            #music-display { min-width: 90px; padding: 0 5px; height: 32px; }
-            .song-title { font-size: 0.7rem; max-width: 80px; }
-            #controls { bottom: 20px; right: 15px; }
-            button.fullscreen-btn { padding: 0; width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
-            .desktop-text { display: none; }
-            .mobile-icon { display: block; }
+            #ui-layer { top: 15px; left: 15px; } .glass-panel { padding: 12px; max-width: 220px; } h1 { font-size: 1.2rem; } .status-text { font-size: 0.65rem; } #author-btn { top: 15px; right: 15px; padding: 5px 12px; font-size: 0.7rem; } #fps-counter { display: none; } #music-controls { bottom: 20px; left: 15px; padding: 5px; } .control-btn, #toggle-player-btn, .folder-btn { width: 30px; height: 30px; font-size: 1rem; } #music-display { min-width: 90px; padding: 0 5px; height: 32px; } .song-title { font-size: 0.7rem; max-width: 80px; } #controls { bottom: 20px; right: 15px; } button.fullscreen-btn { padding: 0; width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; } .desktop-text { display: none; } .mobile-icon { display: block; }
+            #lottery-copy-text { font-size: 18px; } .lottery-main-text { font-size: 28px; } .lottery-sub-text { font-size: 16px; } .lottery-title { font-size: 18px; }
         }
     </style>
 </head>
 <body>
 
     <video class="input_video" autoplay playsinline muted></video>
-    
     <a id="author-btn" href="https://jizaijizai.github.io" target="_blank" onclick="safeOpenLink(event)">About</a>
-
     <div id="fps-counter">物理引擎: 极致模式 | 环境: 太阳系模拟</div>
-
-    <div id="loading">
-        正在构建粒子与启动视觉神经...<br>
-        <span style="font-size: 0.7rem; color: #666; margin-top:5px; display:block;">(移动端请允许摄像头权限以开启手势)</span>
-    </div>
-
+    <div id="loading">正在构建粒子与启动视觉神经...<br><span style="font-size: 0.7rem; color: #666; margin-top:5px; display:block;">(移动端请允许摄像头权限以开启手势)</span></div>
     <div id="music-toast" onclick="forcePlayMusic()">♪ 点击开启音乐</div>
 
     <div id="ui-layer">
         <div class="glass-panel">
             <h1>土星</h1>
             <div class="status-text">
-                状态: <span id="status-indicator" class="highlight">待机</span>
-                <br>
-                > 轨道: 稳定<br>
+                状态: <span id="status-indicator" class="highlight">待机</span><br>
+                <span onclick="showCameraSettings()" style="cursor:pointer; color:#c5a059; text-decoration:underline; font-size:0.75rem; margin-left:10px; pointer-events:auto;" title="切换摄像头">摄像头设置</span><br>
+                > 轨道: <span id="orbit-status">稳定</span><br>
                 > 粒子: <span id="particle-count-display">加载中</span><br>
                 > 交互: <span id="input-mode">检测中...</span>
             </div>
@@ -208,7 +83,6 @@
     </div>
 
     <input type="file" id="file-input" multiple accept="audio/*" style="display: none;">
-
     <div id="music-controls">
         <button id="toggle-player-btn" onclick="togglePlayerUI()" title="展开/收起">◀</button>
         <div id="player-content">
@@ -223,14 +97,16 @@
     </div>
 
     <div id="controls">
-        <button class="fullscreen-btn" onclick="addCustomAsteroid()">
-            <span class="desktop-text">添加小行星</span>
-            <span class="mobile-icon">☄️</span>
-        </button>
-        <button class="fullscreen-btn" onclick="toggleFullScreen()">
-            <span class="desktop-text">全屏沉浸体验</span>
-            <span class="mobile-icon">⛶</span>
-        </button>
+        <button class="fullscreen-btn" onclick="addCustomAsteroid()"><span class="desktop-text">添加小行星</span><span class="mobile-icon">☄️</span></button>
+        <button class="fullscreen-btn" onclick="toggleFullScreen()"><span class="desktop-text">全屏沉浸体验</span><span class="mobile-icon">⛶</span></button>
+    </div>
+
+    <div id="lottery-exit-hint">双手握拳可退出抽奖</div>
+    <div id="lottery-copy-text"></div>
+    <div id="lottery-result-container">
+        <div class="lottery-title" id="lottery-res-title">你抽到的星星是</div>
+        <div class="lottery-main-text" id="lottery-res-main"></div>
+        <div class="lottery-sub-text" id="lottery-res-sub"></div>
     </div>
 
     <div id="canvas-container"></div>
@@ -238,76 +114,134 @@
     <script type="x-shader/x-vertex" id="vertexshader">
         attribute float size; attribute vec3 customColor; attribute float opacityAttr; attribute float orbitSpeed; attribute float isRing; attribute float aRandomId;
         varying vec3 vColor; varying float vDist; varying float vOpacity; varying float vScaleFactor; varying float vIsRing;
+        
         uniform float uTime; uniform float uScale; uniform float uRotationX; uniform float uHeartMorph;
+        uniform float uLotteryState; 
+        uniform float uLeaveProgress;
+        uniform float uEnterProgress;
+        uniform float uDecelAngle;
+        uniform float uBreakAngle;
+        uniform float uRingTime;
+
         mat2 rotate2d(float _angle){ return mat2(cos(_angle),-sin(_angle), sin(_angle),cos(_angle)); }
+        
+        // 【绝对物理同步核心】
+        vec3 getLotteryPosition(vec3 origPos, float R, float baseTh, float spd) {
+            float animTh = baseTh + uRingTime * spd * 0.2;
+            
+            if (uLotteryState <= 2.5) {
+                return vec3(R * cos(animTh), origPos.y, R * sin(animTh));
+            }
+            
+            // [顺时针离开]：增加角度
+            if (uLotteryState < 3.5) {
+                // 计算当前点落后于断口（顺时针方向）的距离
+                float d = mod(uBreakAngle - animTh, 6.2831853);
+                if (d < 0.0) d += 6.2831853;
+                
+                if (uLeaveProgress > d * R) {
+                    float factor = uLeaveProgress - d * R;
+                    // 脱离后向右匀速飞去（X变大）
+                    return vec3(R * cos(uBreakAngle) + factor, origPos.y, R * sin(uBreakAngle));
+                } else {
+                    // 未脱离部分顺时针加速被带走
+                    float newPhi = animTh + uLeaveProgress / R;
+                    return vec3(R * cos(newPhi), origPos.y, R * sin(newPhi));
+                }
+            }
+            
+            // [逆时针回补圆环并减速]：减小角度
+            float d = mod(uBreakAngle - animTh, 6.2831853);
+            if (d < 0.0) d += 6.2831853;
+            
+            float OFFSET = 400.0;
+            float totalProgress = uEnterProgress + uDecelAngle * R;
+            float distToHit = OFFSET + d * R;
+            
+            if (totalProgress > distToHit) {
+                // 原点正上方为起始锚点（-PI/2），角度随进度逆时针衰减
+                float newPhi = -1.5707963 - (totalProgress - distToHit) / R;
+                return vec3(R * cos(newPhi), origPos.y, R * sin(newPhi));
+            } else {
+                // 未切入部分由右向左平移直飞
+                return vec3(distToHit - totalProgress, origPos.y, -R);
+            }
+        }
+
         float hash(float n) { return fract(sin(n) * 43758.5453123); }
+
         void main() {
             float normScaleLOD = clamp((uScale - 0.15) / 2.35, 0.0, 1.0);
             float visibilityThreshold = 0.9 + pow(normScaleLOD, 1.2) * 0.1; 
             if (aRandomId > visibilityThreshold) { gl_Position = vec4(0.0); gl_PointSize = 0.0; return; }
+            
             vec3 pos = position;
-            if (isRing > 0.5) {
-                // 改造环轨道计算，支持向心形形变过渡
-                float baseTh = atan(pos.z, pos.x);
-                float r_circ = length(pos.xz);
-                float animTh = baseTh + uTime * orbitSpeed * 0.2;
-                
-                vec2 circPos = vec2(cos(animTh), sin(animTh)) * r_circ;
-                
-                // 心形参数方程转换
-                float hx = pow(sin(animTh), 3.0);
-                float hz = -(13.0*cos(animTh) - 5.0*cos(2.0*animTh) - 2.0*cos(3.0*animTh) - cos(4.0*animTh)) / 16.0;
-                vec2 heartPos = vec2(hx, hz) * r_circ * 1.2; 
-                
-                vec2 finalXZ = mix(circPos, heartPos, uHeartMorph);
-                pos.x = finalXZ.x; pos.z = finalXZ.y;
+            float R = length(pos.xz);
+            float baseTh = atan(pos.z, pos.x);
+
+            if (uLotteryState > 0.5 && isRing > 0.5) {
+                pos = getLotteryPosition(pos, R, baseTh, orbitSpeed);
+            } else if (uLotteryState > 0.5 && isRing < 0.5) {
+                // 冻结土星中心产生景深虚化
+                vec2 rotatedXZ = rotate2d(0.0) * pos.xz;
+                pos.x = rotatedXZ.x * 0.85; pos.z = rotatedXZ.y * 0.85; pos.y *= 0.85;
             } else {
-                float bodyAngle = uTime * 0.03;
-                vec2 rotatedXZ = rotate2d(bodyAngle) * pos.xz;
-                pos.x = rotatedXZ.x; pos.z = rotatedXZ.y;
+                float animTh = baseTh + uRingTime * orbitSpeed * 0.2;
+                if (isRing > 0.5) {
+                    vec2 circPos = vec2(cos(animTh), sin(animTh)) * R;
+                    float hx = pow(sin(animTh), 3.0);
+                    float hz = -(13.0*cos(animTh) - 5.0*cos(2.0*animTh) - 2.0*cos(3.0*animTh) - cos(4.0*animTh)) / 16.0;
+                    vec2 heartPos = vec2(hx, hz) * R * 1.2; 
+                    vec2 finalXZ = mix(circPos, heartPos, uHeartMorph);
+                    pos.x = finalXZ.x; pos.z = finalXZ.y;
+                } else {
+                    float bodyAngle = uRingTime * 0.03;
+                    vec2 rotatedXZ = rotate2d(bodyAngle) * pos.xz; pos.x = rotatedXZ.x; pos.z = rotatedXZ.y;
+                }
             }
+            
             float cx = cos(uRotationX); float sx = sin(uRotationX);
             float ry = pos.y * cx - pos.z * sx; float rz = pos.y * sx + pos.z * cx;
             pos.y = ry; pos.z = rz;
+            
             vec4 mvPosition = modelViewMatrix * vec4(pos * uScale, 1.0);
-            float dist = -mvPosition.z; vDist = dist;
-            float chaosThreshold = 25.0; 
-            if (dist < chaosThreshold && dist > 0.1) {
+            float dist = -mvPosition.z; vDist = dist; float chaosThreshold = 25.0; 
+            if (dist < chaosThreshold && dist > 0.1 && uLotteryState == 0.0) {
                 float chaosIntensity = 1.0 - (dist / chaosThreshold); chaosIntensity = pow(chaosIntensity, 3.0);
                 float highFreqTime = uTime * 40.0; 
-                float noiseX = sin(highFreqTime + pos.x * 10.0) * hash(pos.y);
-                float noiseY = cos(highFreqTime + pos.y * 10.0) * hash(pos.x);
-                float noiseZ = sin(highFreqTime * 0.5) * hash(pos.z);
+                float noiseX = sin(highFreqTime + pos.x * 10.0) * hash(pos.y); float noiseY = cos(highFreqTime + pos.y * 10.0) * hash(pos.x); float noiseZ = sin(highFreqTime * 0.5) * hash(pos.z);
                 mvPosition.xyz += vec3(noiseX, noiseY, noiseZ) * chaosIntensity * 3.0;
             }
             gl_Position = projectionMatrix * mvPosition;
+            
             float pointSize = size * (350.0 / dist); pointSize *= 0.55; 
             if (isRing < 0.5 && dist < 50.0) pointSize *= 0.8; 
+            if (uLotteryState >= 2.5 && isRing < 0.5) { pointSize *= 1.8; } 
             gl_PointSize = clamp(pointSize, 0.0, 300.0);
             vColor = customColor; vOpacity = opacityAttr; vScaleFactor = uScale; vIsRing = isRing;
         }
     </script>
+    
     <script type="x-shader/x-fragment" id="fragmentshader">
         varying vec3 vColor; varying float vDist; varying float vOpacity; varying float vScaleFactor; varying float vIsRing;
+        uniform float uLotteryState;
         void main() {
             vec2 cxy = 2.0 * gl_PointCoord - 1.0; float r = dot(cxy, cxy); if (r > 1.0) discard;
-            float glow = smoothstep(1.0, 0.4, r); 
-            float t = clamp((vScaleFactor - 0.15) / 2.35, 0.0, 1.0);
+            float glow = smoothstep(1.0, 0.4, r); float t = clamp((vScaleFactor - 0.15) / 2.35, 0.0, 1.0);
             vec3 deepGold = vec3(0.35, 0.22, 0.05); float colorMix = smoothstep(0.1, 0.9, t);
-            vec3 baseColor = mix(deepGold, vColor, colorMix);
-            float brightness = 0.2 + 1.0 * t; float densityAlpha = 0.25 + 0.45 * smoothstep(0.0, 0.5, t);
+            vec3 baseColor = mix(deepGold, vColor, colorMix); float brightness = 0.2 + 1.0 * t; float densityAlpha = 0.25 + 0.45 * smoothstep(0.0, 0.5, t);
             vec3 finalColor = baseColor * brightness;
-            if (vDist < 40.0) {
-                float closeMix = 1.0 - (vDist / 40.0);
-                if (vIsRing < 0.5) { vec3 deepTexture = pow(vColor, vec3(1.4)) * 1.5; finalColor = mix(finalColor, deepTexture, closeMix * 0.8); } 
-                else { finalColor += vec3(0.15, 0.12, 0.1) * closeMix; }
-            }
+            if (vDist < 40.0) { float closeMix = 1.0 - (vDist / 40.0); if (vIsRing < 0.5) { vec3 deepTexture = pow(vColor, vec3(1.4)) * 1.5; finalColor = mix(finalColor, deepTexture, closeMix * 0.8); } else { finalColor += vec3(0.15, 0.12, 0.1) * closeMix; } }
             float depthAlpha = 1.0; if (vDist < 10.0) depthAlpha = smoothstep(0.0, 10.0, vDist);
-            gl_FragColor = vec4(finalColor, glow * vOpacity * densityAlpha * depthAlpha);
+            float finalOpacity = glow * vOpacity * densityAlpha * depthAlpha;
+            
+            if (uLotteryState >= 2.5 && vIsRing < 0.5) { finalColor *= 0.45; finalOpacity *= 0.55; }
+            gl_FragColor = vec4(finalColor, finalOpacity);
         }
     </script>
+    
     <script type="x-shader/x-vertex" id="starVertexShader">
-        attribute float size; attribute vec3 customColor; varying vec3 vColor; uniform float uTime;
+        attribute float size; attribute vec3 customColor; uniform float uTime; varying vec3 vColor;
         void main() { vColor = customColor; vec4 mvPosition = modelViewMatrix * vec4(position, 1.0); float dist = -mvPosition.z; gl_PointSize = clamp(size * (1000.0 / dist), 1.0, 8.0); gl_Position = projectionMatrix * mvPosition; }
     </script>
     <script type="x-shader/x-fragment" id="starFragmentShader">
@@ -319,385 +253,156 @@
     </script>
     <script type="x-shader/x-fragment" id="planetFragmentShader">
         uniform vec3 color1; uniform vec3 color2; uniform float noiseScale; uniform vec3 lightDir; uniform float atmosphere; varying vec2 vUv; varying vec3 vNormal; varying vec3 vViewPosition;
-        float random(vec2 st) { return fract(sin(dot(st.xy, vec2(12.9898,78.233))) * 43758.5453123); }
-        float noise(vec2 st) { vec2 i = floor(st); vec2 f = fract(st); float a = random(i); float b = random(i + vec2(1.0, 0.0)); float c = random(i + vec2(0.0, 1.0)); float d = random(i + vec2(1.0, 1.0)); vec2 u = f * f * (3.0 - 2.0 * f); return mix(a, b, u.x) + (c - a)* u.y * (1.0 - u.x) + (d - b) * u.x * u.y; }
-        float fbm(vec2 st) { float value = 0.0; float amplitude = 0.5; for (int i = 0; i < 5; i++) { value += amplitude * noise(st); st *= 2.0; amplitude *= 0.5; } return value; }
+        float random(vec2 st) { return fract(sin(dot(st.xy, vec2(12.9898,78.233))) * 43758.5453123); } float noise(vec2 st) { vec2 i = floor(st); vec2 f = fract(st); float a = random(i); float b = random(i + vec2(1.0, 0.0)); float c = random(i + vec2(0.0, 1.0)); float d = random(i + vec2(1.0, 1.0)); vec2 u = f * f * (3.0 - 2.0 * f); return mix(a, b, u.x) + (c - a)* u.y * (1.0 - u.x) + (d - b) * u.x * u.y; } float fbm(vec2 st) { float value = 0.0; float amplitude = 0.5; for (int i = 0; i < 5; i++) { value += amplitude * noise(st); st *= 2.0; amplitude *= 0.5; } return value; }
         void main() { float n = fbm(vUv * noiseScale); vec3 albedo = mix(color1, color2, n); vec3 normal = normalize(vNormal); vec3 light = normalize(lightDir); float diff = max(dot(normal, light), 0.05); vec3 viewDir = normalize(vViewPosition); float fresnel = pow(1.0 - dot(viewDir, normal), 3.0); vec3 finalColor = albedo * diff + atmosphere * vec3(0.5, 0.6, 1.0) * fresnel; gl_FragColor = vec4(finalColor, 1.0); }
     </script>
 
     <script>
-        // 集中管理硬编码参数
         const CONFIG = {
-            MAX_ASTEROIDS: 100,
-            PARTICLE_COUNT_DESKTOP: 1200000,
-            PARTICLE_COUNT_MOBILE: 400000,
-            TRAIL_MAX_PARTICLES: 3000,
-            PLANET_RADIUS: 18,
-            RESIZE_DEBOUNCE_MS: 200,
-            MEDIAPIPE_TIMEOUT_MS: 15000
+            MAX_ASTEROIDS: 100, PARTICLE_COUNT_DESKTOP: 1200000, PARTICLE_COUNT_MOBILE: 400000,
+            TRAIL_MAX_PARTICLES: 3000, PLANET_RADIUS: 18, RESIZE_DEBOUNCE_MS: 200, MEDIAPIPE_TIMEOUT_MS: 15000
         };
+
+        let lotteryState = 0; 
+        let lotteryTimer = 0;
+        let lotteryGestureHoldTimer = 0;
+        let isLotteryGestureActive = false;
+        
+        let lotteryBreakAngle = 0;
+        let lotteryLeaveProgress = 0;
+        let lotteryEnterProgress = 0;
+        let lotteryDecelAngle = 0;
+        let totalDecelAngle = 0;
+
+        let lotterySelectedAst = null;
+        let lotteryHistory = [];
+        let lotteryCopyTexts = ["星星之所以美丽，\n\n是因为有你在看。"];
+        let currentCopyText = "";
+        let uRingTime = 0; 
+
+        fetch('文案.txt').then(r => r.text()).then(t => {
+            let texts = t.split('\n\n').map(s => s.trim()).filter(s => s.length > 0);
+            if (texts.length > 0) lotteryCopyTexts = texts;
+        }).catch(e => console.log("使用预设默认文案"));
 
         function customToast(msg) {
-            const toast = document.createElement('div');
-            toast.innerText = msg;
+            const toast = document.createElement('div'); toast.innerText = msg;
             toast.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.8);border:1px solid #c5a059;color:#e0cda7;padding:10px 20px;border-radius:20px;z-index:10000;font-size:14px;pointer-events:none;opacity:0;transition:opacity 0.3s;text-align:center;box-shadow:0 0 15px rgba(0,0,0,0.8);';
-            document.body.appendChild(toast);
-            toast.offsetHeight;
-            toast.style.opacity = '1';
-            setTimeout(() => {
-                toast.style.opacity = '0';
-                setTimeout(() => document.body.removeChild(toast), 300);
-            }, 3000);
+            document.body.appendChild(toast); toast.offsetHeight; toast.style.opacity = '1';
+            setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => document.body.removeChild(toast), 300); }, 3000);
         }
 
-        function customPrompt(message, defaultValue, callback) {
-            const overlay = document.createElement('div');
-            overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);z-index:9999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(5px);';
-            
-            const box = document.createElement('div');
-            box.style.cssText = 'background:rgba(20,20,20,0.9);border:1px solid #c5a059;padding:25px;border-radius:8px;text-align:center;color:#e0cda7;font-family:monospace;box-shadow:0 0 20px rgba(0,0,0,0.8);min-width:260px;';
-            
-            const msg = document.createElement('div');
-            msg.innerText = message;
-            msg.style.marginBottom = '15px';
-            
-            const input = document.createElement('input');
-            input.type = 'text';
-            input.value = defaultValue;
-            input.style.cssText = 'width:80%;padding:10px;background:rgba(0,0,0,0.5);border:1px solid rgba(197,160,89,0.5);color:#fff;outline:none;text-align:center;margin-bottom:20px;border-radius:4px;';
-            
-            const btnWrap = document.createElement('div');
-            
-            const btnCancel = document.createElement('button');
-            btnCancel.innerText = '取消';
-            btnCancel.style.cssText = 'background:rgba(255,255,255,0.05);border:1px solid #666;color:#ccc;padding:8px 15px;cursor:pointer;margin:0 5px;border-radius:4px;transition:all 0.3s;';
-            
-            const btnOk = document.createElement('button');
-            btnOk.innerText = '确认注入';
-            btnOk.style.cssText = 'background:rgba(197,160,89,0.2);border:1px solid #c5a059;color:#c5a059;padding:8px 15px;cursor:pointer;margin:0 5px;border-radius:4px;transition:all 0.3s;';
-            
-            btnWrap.appendChild(btnCancel);
-            btnWrap.appendChild(btnOk);
-            box.appendChild(msg); box.appendChild(input); box.appendChild(btnWrap);
-            overlay.appendChild(box); document.body.appendChild(overlay);
-            
-            input.focus();
-            function close(val) { document.body.removeChild(overlay); callback(val); }
-            btnOk.onclick = () => close(input.value);
-            btnCancel.onclick = () => close(null);
-
-            // 自定义弹窗的键盘无障碍支持
-            input.addEventListener('keydown', (e) => {
-                if(e.key === 'Enter') { close(input.value); }
-                if(e.key === 'Escape') { close(null); }
-            });
+        let globalHands = null; let globalStream = null; let globalCameraFrameId = null; let cameraStarted = false;
+        async function startCustomCamera(deviceId = null) {
+            if (globalStream) { globalStream.getTracks().forEach(track => track.stop()); } if (globalCameraFrameId) { cancelAnimationFrame(globalCameraFrameId); }
+            const constraints = { video: deviceId ? { deviceId: { exact: deviceId }, width: 640, height: 480 } : { facingMode: 'user', width: 640, height: 480 } };
+            try {
+                globalStream = await navigator.mediaDevices.getUserMedia(constraints); videoElement.srcObject = globalStream; await videoElement.play();
+                async function processFrame() { if (!videoElement.paused && !videoElement.ended && globalHands) { try { await globalHands.send({image: videoElement}); } catch(e) {} } globalCameraFrameId = requestAnimationFrame(processFrame); }
+                cameraStarted = true; processFrame();
+            } catch (e) { document.getElementById('loading').style.display = 'none'; document.getElementById('input-mode').innerText = "获取信号失败"; customToast("⚠️ 无法接入摄像头信号: " + e.message); }
         }
-
-        // 深度内存清理
-        function deepDisposeObject(obj) {
-            if (!obj) return;
-            if (obj.geometry) obj.geometry.dispose();
-            if (obj.material) {
-                if (Array.isArray(obj.material)) obj.material.forEach(m => m.dispose());
-                else obj.material.dispose();
-            }
-            if (obj.children) obj.children.forEach(child => deepDisposeObject(child));
-        }
-
-        const defaultPlaylist = [ 
-        "./music/take me hand.mp3",
-        "./music/鲸.mp3"
-         ];
-        let activePlaylist = [...defaultPlaylist];
-        let currentSongIndex = 0;
-        const bgm = new Audio();
-        bgm.volume = 0.5; bgm.loop = false;
-
-        const musicControls = document.getElementById('music-controls');
-        const toggleBtn = document.getElementById('toggle-player-btn');
-        const displayTitle = document.getElementById('display-title');
-        const displayTime = document.getElementById('display-time');
-        const musicToast = document.getElementById('music-toast');
-        const fileInput = document.getElementById('file-input');
-        const inputModeEl = document.getElementById('input-mode');
-        let isMinimized = false; let wasPlayingBeforeHide = false; 
-
-        // 新增：页面加载 1.5 秒后，如果音乐没在播放，就弹出“点击开启音乐”的提示
-        setTimeout(() => {
-            if (bgm.paused) {
-                musicToast.classList.add('show');
-            }
-        }, 1500); 
-
-        function safeOpenLink(event) {
-            if (document.fullscreenElement) {
-                event.preventDefault();
-                document.exitFullscreen().then(() => { setTimeout(() => window.open(event.target.href, '_blank'), 100); }).catch(() => window.open(event.target.href, '_blank'));
-            }
-        }
-        function togglePlayerUI() {
-            isMinimized = !isMinimized;
-            if (isMinimized) { musicControls.classList.add('minimized'); toggleBtn.innerHTML = "♪"; } 
-            else { musicControls.classList.remove('minimized'); toggleBtn.innerHTML = "◀"; }
-        }
-        musicControls.addEventListener('click', (e) => { if (isMinimized && e.target !== toggleBtn) togglePlayerUI(); });
-        function triggerImport() { fileInput.click(); }
-        fileInput.addEventListener('change', function(e) {
-            const files = Array.from(e.target.files);
-            if (files.length > 0) {
-                activePlaylist.push(...files); displayTitle.innerText = `已添加 ${files.length} 首`;
-                setTimeout(() => { if(bgm.paused && activePlaylist.length === files.length) loadSong(0); else displayTitle.innerText = getSongName(activePlaylist[currentSongIndex]); }, 1500);
-            }
-        });
-
-        function getSongName(item) {
-            let rawName = "";
-            if (typeof item === 'string') { try { rawName = decodeURIComponent(item.split('/').pop()); } catch(e) { rawName = item.split('/').pop(); } } 
-            else if (item instanceof File) { rawName = item.name; } else { return "未知歌曲"; }
-            return rawName.replace(/\.[^/.]+$/, "").replace(/\s+/g, '_');
-        }
-
-        let currentObjectUrl = null; 
-        function loadSong(index) {
-            if (activePlaylist.length === 0) { displayTitle.innerText = "请添加歌曲"; return; }
-            if (index >= activePlaylist.length) currentSongIndex = 0; else if (index < 0) currentSongIndex = activePlaylist.length - 1; else currentSongIndex = index;
-            const songItem = activePlaylist[currentSongIndex];
-            if (currentObjectUrl) { URL.revokeObjectURL(currentObjectUrl); currentObjectUrl = null; }
-            if (typeof songItem === 'string') { bgm.src = songItem; } else { 
-                try {
-                    currentObjectUrl = URL.createObjectURL(songItem); bgm.src = currentObjectUrl; 
-                } catch(e) {
-                    customToast("⚠️ 无法加载此音频文件");
-                }
-            }
-            displayTitle.innerText = getSongName(songItem); displayTime.innerText = "00:00";
-        }
-        // 音频加载的错误反馈
-        bgm.onerror = function() { 
-            customToast("⚠️ 不支持的音频格式或加载失败");
-            if (activePlaylist.length <= 1) { displayTitle.innerText = "播放失败"; return; } 
-            setTimeout(() => playNext(), 1500); 
-        };
-        function playNext() { loadSong(currentSongIndex + 1); bgm.play().then(() => updatePlayStatus(true)).catch(() => updatePlayStatus(false)); }
-        function playPrev() { loadSong(currentSongIndex - 1); bgm.play().then(() => updatePlayStatus(true)).catch(() => updatePlayStatus(false)); }
-        function toggleMusic() { if (activePlaylist.length === 0) return; if (bgm.paused) { bgm.play(); updatePlayStatus(true); } else { bgm.pause(); updatePlayStatus(false); } }
-        function updatePlayStatus(isPlaying) { displayTitle.style.color = isPlaying ? "#fff" : "#c5a059"; }
-        function forcePlayMusic() { 
-            // 新增：如果播放器还没加载源文件，先加载列表的第一首歌
-            if (!bgm.getAttribute('src')) {
-                loadSong(0);
-            }
-            bgm.play().then(() => {
-                updatePlayStatus(true); 
-                musicToast.classList.remove('show'); 
-            }).catch(e => {
-                customToast("⚠️ 播放失败，请检查音乐路径");
-            });
-        }
-        function formatTime(s) { if(isNaN(s)) return "00:00"; return `${Math.floor(s/60).toString().padStart(2,'0')}:${Math.floor(s%60).toString().padStart(2,'0')}`; }
-        bgm.addEventListener('timeupdate', () => { if(bgm.duration) displayTime.innerText = formatTime(bgm.currentTime); });
-        bgm.addEventListener('ended', playNext); 
-
-        // 颜色贴图
-        function createHeartTexture(color1, color2) {
-            const canvas = document.createElement('canvas'); canvas.width = 64; canvas.height = 64; const ctx = canvas.getContext('2d');
-            ctx.beginPath(); ctx.moveTo(32, 16); ctx.bezierCurveTo(32, 12, 24, 0, 14, 0); ctx.bezierCurveTo(0, 0, 0, 22, 0, 22);
-            ctx.bezierCurveTo(0, 36, 16, 46, 32, 60); ctx.bezierCurveTo(48, 46, 64, 36, 64, 22); ctx.bezierCurveTo(64, 22, 64, 0, 50, 0); ctx.bezierCurveTo(40, 0, 32, 12, 32, 16);
-            const grad = ctx.createRadialGradient(32, 32, 5, 32, 32, 30); grad.addColorStop(0, color1); grad.addColorStop(1, color2);
-            ctx.fillStyle = grad; ctx.fill(); return new THREE.CanvasTexture(canvas);
-        }
-
-        const heartColors = [ ['#ff9999', '#ff3333'], ['#99ccff', '#3366ff'], ['#ffcc99', '#ff9933'], ['#cc99ff', '#9933ff'], ['#99ff99', '#33cc33'], ['#ffff99', '#ffcc00'], ['#ff99cc', '#ff3399'] ];
-        const heartTextures = heartColors.map(colors => createHeartTexture(colors[0], colors[1]));
-        
-        let isHeartGesture = false; // 单手心形
-        let isTwoHandHeart = false; // 双手心形
-        let currentHeartMorph = 0.0, targetHeartMorph = 0.0;
-        let heartGestureTimer = 0, noHeartTimer = 0, isRecovering = false;
-        let escapeQueue = [], activeEscaping = 0;
-
-        // 全局拖尾渲染系统
-        class TrailSystem {
-            constructor(scene, maxParticles) {
-                this.maxParticles = maxParticles;
-                this.geometry = new THREE.BufferGeometry();
-                this.positions = new Float32Array(maxParticles * 3);
-                this.colors = new Float32Array(maxParticles * 3);
-                this.lifes = new Float32Array(maxParticles);
-                this.idx = 0;
-                this.posUpdateStart = -1;
-                this.posUpdateEnd = -1;
-
-                this.geometry.setAttribute('position', new THREE.BufferAttribute(this.positions, 3));
-                this.geometry.setAttribute('color', new THREE.BufferAttribute(this.colors, 3));
-                this.geometry.setAttribute('life', new THREE.BufferAttribute(this.lifes, 1));
-                const mat = new THREE.ShaderMaterial({
-                    vertexShader: `
-                        attribute float life; attribute vec3 color; varying float vLife; varying vec3 vColor;
-                        void main() { vLife = life; vColor = color; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); gl_PointSize = max(1.0, life * 8.0); }
-                    `,
-                    fragmentShader: `
-                        varying float vLife; varying vec3 vColor;
-                        void main() { if (vLife <= 0.0) discard; vec2 cxy = 2.0 * gl_PointCoord - 1.0; float r = dot(cxy, cxy); if (r > 1.0) discard; gl_FragColor = vec4(vColor, vLife * (1.0 - r)); }
-                    `,
-                    transparent: true, blending: THREE.AdditiveBlending, depthWrite: false
+        function showCameraSettings() {
+            if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) { customToast("⚠️ 您的浏览器不支持此功能"); return; }
+            navigator.mediaDevices.enumerateDevices().then(devices => {
+                const videoDevices = devices.filter(device => device.kind === 'videoinput'); if (videoDevices.length === 0) { customToast("⚠️ 未检测到可用的摄像头硬件"); return; }
+                const overlay = document.createElement('div'); overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);z-index:9999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(5px);';
+                const box = document.createElement('div'); box.style.cssText = 'background:rgba(20,20,20,0.9);border:1px solid #c5a059;padding:30px;border-radius:12px;text-align:center;color:#e0cda7;font-family:monospace;box-shadow:0 0 20px rgba(0,0,0,0.8);min-width:280px; max-width: 90%; max-height: 80vh; overflow-y: auto;';
+                const title = document.createElement('div'); title.innerText = '📡 选择视觉神经传感器'; title.style.marginBottom = '25px'; title.style.fontWeight = 'bold'; box.appendChild(title);
+                videoDevices.forEach((device, index) => {
+                    const btn = document.createElement('button'); btn.innerText = device.label || `未知摄像头设备 ${index + 1}`;
+                    btn.style.cssText = 'display:block; width:100%; background:rgba(197,160,89,0.1); border:1px solid rgba(197,160,89,0.4); color:#e0cda7; padding:15px; margin-bottom:12px; border-radius:6px; cursor:pointer; transition:all 0.3s; text-align:left; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-family:monospace; font-size:14px;';
+                    btn.onmouseover = () => { btn.style.background = 'rgba(197,160,89,0.3)'; }; btn.onmouseout = () => { btn.style.background = 'rgba(197,160,89,0.1)'; };
+                    btn.onclick = () => { document.body.removeChild(overlay); startCustomCamera(device.deviceId); }; box.appendChild(btn);
                 });
-                this.points = new THREE.Points(this.geometry, mat); scene.add(this.points);
-            }
-            addPoint(vec3Pos, colorHex) {
-                let i = this.idx % this.maxParticles;
-                this.positions[i*3] = vec3Pos.x; this.positions[i*3+1] = vec3Pos.y; this.positions[i*3+2] = vec3Pos.z;
-                let c = new THREE.Color(colorHex);
-                this.colors[i*3] = c.r; this.colors[i*3+1] = c.g; this.colors[i*3+2] = c.b;
-                this.lifes[i] = 1.0; 
-
-                // 拖尾系统的缓冲区更新防抖记录
-                let startIdx = i * 3;
-                let endIdx = startIdx + 3;
-                if(this.posUpdateStart === -1) {
-                    this.posUpdateStart = startIdx;
-                    this.posUpdateEnd = endIdx;
-                } else {
-                    this.posUpdateStart = Math.min(this.posUpdateStart, startIdx);
-                    this.posUpdateEnd = Math.max(this.posUpdateEnd, endIdx);
-                }
-                
-                this.idx++;
-            }
-            update(delta) {
-                // 利用 updateRange 优化缓冲区更新
-                if (this.posUpdateStart !== -1) {
-                    this.geometry.attributes.position.updateRange.offset = this.posUpdateStart;
-                    this.geometry.attributes.position.updateRange.count = this.posUpdateEnd - this.posUpdateStart;
-                    this.geometry.attributes.position.needsUpdate = true;
-                    
-                    this.geometry.attributes.color.updateRange.offset = this.posUpdateStart;
-                    this.geometry.attributes.color.updateRange.count = this.posUpdateEnd - this.posUpdateStart;
-                    this.geometry.attributes.color.needsUpdate = true;
-                    
-                    this.posUpdateStart = -1;
-                    this.posUpdateEnd = -1;
-                }
-
-                let needsLifeUpdate = false;
-                for(let i=0; i<this.maxParticles; i++) { 
-                    if (this.lifes[i] > 0) {
-                        this.lifes[i] -= delta * 1.5; 
-                        needsLifeUpdate = true;
-                    } 
-                }
-                if(needsLifeUpdate) this.geometry.attributes.life.needsUpdate = true;
-            }
+                const btnCancel = document.createElement('button'); btnCancel.innerText = '取消切换'; btnCancel.style.cssText = 'margin-top: 20px; background:rgba(255,255,255,0.05); border:1px solid #666; color:#ccc; padding:10px 30px; cursor:pointer; border-radius:30px; transition:all 0.3s; letter-spacing: 2px;';
+                btnCancel.onclick = () => document.body.removeChild(overlay); box.appendChild(btnCancel); overlay.appendChild(box); document.body.appendChild(overlay);
+            }).catch(err => { customToast("⚠️ 无法获取设备列表，请确保已授予权限"); });
         }
-        let globalTrails;
+        function deepDisposeObject(obj) { if (!obj) return; if (obj.geometry) obj.geometry.dispose(); if (obj.material) { if (Array.isArray(obj.material)) obj.material.forEach(m => m.dispose()); else obj.material.dispose(); } if (obj.children) obj.children.forEach(child => deepDisposeObject(child)); }
 
-        const customAsteroids = [];
+        const defaultPlaylist = [ "./music/take me hand.mp3", "./music/鲸.mp3","./music/暮 Passage.mp3" ]; let activePlaylist = [...defaultPlaylist]; let currentSongIndex = 0; const bgm = new Audio(); bgm.volume = 0.5; bgm.loop = false;
+        const musicControls = document.getElementById('music-controls'); const toggleBtn = document.getElementById('toggle-player-btn'); const displayTitle = document.getElementById('display-title'); const displayTime = document.getElementById('display-time'); const musicToast = document.getElementById('music-toast'); const fileInput = document.getElementById('file-input');
+        let isMinimized = false; setTimeout(() => { if (bgm.paused) { musicToast.classList.add('show'); } }, 1500); 
+        function safeOpenLink(event) { if (document.fullscreenElement) { event.preventDefault(); document.exitFullscreen().then(() => { setTimeout(() => window.open(event.target.href, '_blank'), 100); }).catch(() => window.open(event.target.href, '_blank')); } }
+        function togglePlayerUI() { isMinimized = !isMinimized; if (isMinimized) { musicControls.classList.add('minimized'); toggleBtn.innerHTML = "♪"; } else { musicControls.classList.remove('minimized'); toggleBtn.innerHTML = "◀"; } } musicControls.addEventListener('click', (e) => { if (isMinimized && e.target !== toggleBtn) togglePlayerUI(); });
+        function triggerImport() { fileInput.click(); } fileInput.addEventListener('change', function(e) { const files = Array.from(e.target.files); if (files.length > 0) { activePlaylist.push(...files); displayTitle.innerText = `已添加 ${files.length} 首`; setTimeout(() => { if(bgm.paused && activePlaylist.length === files.length) loadSong(0); else displayTitle.innerText = getSongName(activePlaylist[currentSongIndex]); }, 1500); } });
+        function getSongName(item) { let rawName = ""; if (typeof item === 'string') { try { rawName = decodeURIComponent(item.split('/').pop()); } catch(e) { rawName = item.split('/').pop(); } } else if (item instanceof File) { rawName = item.name; } else { return "未知歌曲"; } return rawName.replace(/\.[^/.]+$/, "").replace(/\s+/g, '_'); }
+        let currentObjectUrl = null; 
+        function loadSong(index) { if (activePlaylist.length === 0) { displayTitle.innerText = "请添加歌曲"; return; } if (index >= activePlaylist.length) currentSongIndex = 0; else if (index < 0) currentSongIndex = activePlaylist.length - 1; else currentSongIndex = index; const songItem = activePlaylist[currentSongIndex]; if (currentObjectUrl) { URL.revokeObjectURL(currentObjectUrl); currentObjectUrl = null; } if (typeof songItem === 'string') { bgm.src = songItem; } else { try { currentObjectUrl = URL.createObjectURL(songItem); bgm.src = currentObjectUrl; } catch(e) { customToast("⚠️ 无法加载此音频文件"); } } displayTitle.innerText = getSongName(songItem); displayTime.innerText = "00:00"; }
+        bgm.onerror = function() { customToast("⚠️ 不支持的音频格式或加载失败"); if (activePlaylist.length <= 1) { displayTitle.innerText = "播放失败"; return; } setTimeout(() => playNext(), 1500); };
+        function playNext() { loadSong(currentSongIndex + 1); bgm.play().then(() => updatePlayStatus(true)).catch(() => updatePlayStatus(false)); } function playPrev() { loadSong(currentSongIndex - 1); bgm.play().then(() => updatePlayStatus(true)).catch(() => updatePlayStatus(false)); } function toggleMusic() { if (activePlaylist.length === 0) return; if (bgm.paused) { bgm.play(); updatePlayStatus(true); } else { bgm.pause(); updatePlayStatus(false); } } function updatePlayStatus(isPlaying) { displayTitle.style.color = isPlaying ? "#fff" : "#c5a059"; } function forcePlayMusic() { if (!bgm.getAttribute('src')) { loadSong(0); } bgm.play().then(() => { updatePlayStatus(true); musicToast.classList.remove('show'); }).catch(e => { customToast("⚠️ 播放失败，请检查音乐路径"); }); }
+        function formatTime(s) { if(isNaN(s)) return "00:00"; return `${Math.floor(s/60).toString().padStart(2,'0')}:${Math.floor(s%60).toString().padStart(2,'0')}`; } bgm.addEventListener('timeupdate', () => { if(bgm.duration) displayTime.innerText = formatTime(bgm.currentTime); }); bgm.addEventListener('ended', playNext); 
 
-        const DANMAKU_TRACKS = 12;
-        const trackLastUsed = new Array(DANMAKU_TRACKS).fill(0);
+        function createHeartTexture(color1, color2) { const canvas = document.createElement('canvas'); canvas.width = 64; canvas.height = 64; const ctx = canvas.getContext('2d'); ctx.beginPath(); ctx.moveTo(32, 16); ctx.bezierCurveTo(32, 12, 24, 0, 14, 0); ctx.bezierCurveTo(0, 0, 0, 22, 0, 22); ctx.bezierCurveTo(0, 36, 16, 46, 32, 60); ctx.bezierCurveTo(48, 46, 64, 36, 64, 22); ctx.bezierCurveTo(64, 22, 64, 0, 50, 0); ctx.bezierCurveTo(40, 0, 32, 12, 32, 16); const grad = ctx.createRadialGradient(32, 32, 5, 32, 32, 30); grad.addColorStop(0, color1); grad.addColorStop(1, color2); ctx.fillStyle = grad; ctx.fill(); return new THREE.CanvasTexture(canvas); }
+        const heartColors = [ ['#ff9999', '#ff3333'], ['#99ccff', '#3366ff'], ['#ffcc99', '#ff9933'], ['#cc99ff', '#9933ff'], ['#99ff99', '#33cc33'], ['#ffff99', '#ffcc00'], ['#ff99cc', '#ff3399'] ]; const heartTextures = heartColors.map(colors => createHeartTexture(colors[0], colors[1]));
+        
+        let isHeartGesture = false; let isTwoHandHeart = false; let currentHeartMorph = 0.0, targetHeartMorph = 0.0; let heartGestureTimer = 0, noHeartTimer = 0, isRecovering = false; let escapeQueue = [], activeEscaping = 0;
 
-        function triggerDanmaku(text) {
-            const el = document.createElement('div');
-            el.className = 'danmaku-item';
-            el.innerText = text;
-            
-            const now = Date.now();
-            let selectedTrack = 0;
-            let maxIdleTime = -1;
-            
-            // 寻找空闲时间最长的弹幕轨道，避免遮挡
-            for (let i = 0; i < DANMAKU_TRACKS; i++) {
-                let idleTime = now - trackLastUsed[i];
-                if (idleTime > maxIdleTime) {
-                    maxIdleTime = idleTime;
-                    selectedTrack = i;
-                }
-            }
-            trackLastUsed[selectedTrack] = now;
-            
-            // 将高度均匀分布到设定的轨道内(10% - 90%)
-            el.style.top = (10 + selectedTrack * (80 / DANMAKU_TRACKS)) + '%';
-            
-            document.body.appendChild(el);
-            setTimeout(() => el.remove(), 6000); 
+        class TrailSystem {
+            constructor(scene, maxParticles) { this.maxParticles = maxParticles; this.geometry = new THREE.BufferGeometry(); this.positions = new Float32Array(maxParticles * 3); this.colors = new Float32Array(maxParticles * 3); this.lifes = new Float32Array(maxParticles); this.idx = 0; this.posUpdateStart = -1; this.posUpdateEnd = -1; this.geometry.setAttribute('position', new THREE.BufferAttribute(this.positions, 3)); this.geometry.setAttribute('color', new THREE.BufferAttribute(this.colors, 3)); this.geometry.setAttribute('life', new THREE.BufferAttribute(this.lifes, 1)); const mat = new THREE.ShaderMaterial({ vertexShader: `attribute float life; attribute vec3 color; varying float vLife; varying vec3 vColor; void main() { vLife = life; vColor = color; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); gl_PointSize = max(1.0, life * 8.0); }`, fragmentShader: `varying float vLife; varying vec3 vColor; void main() { if (vLife <= 0.0) discard; vec2 cxy = 2.0 * gl_PointCoord - 1.0; float r = dot(cxy, cxy); if (r > 1.0) discard; gl_FragColor = vec4(vColor, vLife * (1.0 - r)); }`, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }); this.points = new THREE.Points(this.geometry, mat); scene.add(this.points); }
+            addPoint(vec3Pos, colorHex) { let i = this.idx % this.maxParticles; this.positions[i*3] = vec3Pos.x; this.positions[i*3+1] = vec3Pos.y; this.positions[i*3+2] = vec3Pos.z; let c = new THREE.Color(colorHex); this.colors[i*3] = c.r; this.colors[i*3+1] = c.g; this.colors[i*3+2] = c.b; this.lifes[i] = 1.0; let startIdx = i * 3; let endIdx = startIdx + 3; if(this.posUpdateStart === -1) { this.posUpdateStart = startIdx; this.posUpdateEnd = endIdx; } else { this.posUpdateStart = Math.min(this.posUpdateStart, startIdx); this.posUpdateEnd = Math.max(this.posUpdateEnd, endIdx); } this.idx++; }
+            update(delta) { if (this.posUpdateStart !== -1) { this.geometry.attributes.position.updateRange.offset = this.posUpdateStart; this.geometry.attributes.position.updateRange.count = this.posUpdateEnd - this.posUpdateStart; this.geometry.attributes.position.needsUpdate = true; this.geometry.attributes.color.updateRange.offset = this.posUpdateStart; this.geometry.attributes.color.updateRange.count = this.posUpdateEnd - this.posUpdateStart; this.geometry.attributes.color.needsUpdate = true; this.posUpdateStart = -1; this.posUpdateEnd = -1; } let needsLifeUpdate = false; for(let i=0; i<this.maxParticles; i++) { if (this.lifes[i] > 0) { this.lifes[i] -= delta * 1.5; needsLifeUpdate = true; } } if(needsLifeUpdate) this.geometry.attributes.life.needsUpdate = true; }
         }
+        let globalTrails; const customAsteroids = []; const DANMAKU_TRACKS = 12; const trackLastUsed = new Array(DANMAKU_TRACKS).fill(0);
+        function triggerDanmaku(text) { const el = document.createElement('div'); el.className = 'danmaku-item'; el.innerText = text; const now = Date.now(); let selectedTrack = 0; let maxIdleTime = -1; for (let i = 0; i < DANMAKU_TRACKS; i++) { let idleTime = now - trackLastUsed[i]; if (idleTime > maxIdleTime) { maxIdleTime = idleTime; selectedTrack = i; } } trackLastUsed[selectedTrack] = now; el.style.top = (10 + selectedTrack * (80 / DANMAKU_TRACKS)) + '%'; document.body.appendChild(el); setTimeout(() => el.remove(), 6000); }
 
         function addCustomAsteroid() {
             if (!particles) { customToast("星系粒子仍在加载中，请稍后尝试..."); return; }
-            customPrompt("为您的小行星设置一段专属文字:", "✨ 专属小行星", function(text) {
-                if (!text) return;
+            const overlay = document.createElement('div'); overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);z-index:9999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(5px);';
+            const box = document.createElement('div'); box.style.cssText = 'background:rgba(20,20,20,0.9);border:1px solid #c5a059;padding:25px;border-radius:8px;text-align:center;color:#e0cda7;font-family:monospace;box-shadow:0 0 20px rgba(0,0,0,0.8);min-width:280px;';
+            const msg = document.createElement('div'); msg.innerText = "添加专属小行星"; msg.style.marginBottom = '15px'; msg.style.fontSize = '16px'; msg.style.fontWeight = 'bold';
+            const input = document.createElement('input'); input.type = 'text'; input.value = "✨ 专属小行星"; input.style.cssText = 'width:80%;padding:10px;background:rgba(0,0,0,0.5);border:1px solid rgba(197,160,89,0.5);color:#fff;outline:none;text-align:center;margin-bottom:15px;border-radius:4px;';
+            const colorWrap = document.createElement('div'); colorWrap.style.cssText = 'display:flex; justify-content:center; gap:20px; margin-bottom:20px;';
+            const labelPrimary = document.createElement('label'); labelPrimary.style.cssText = 'cursor:pointer; display:flex; align-items:center; gap:5px; color:#c5a059; font-size:14px;'; labelPrimary.innerHTML = '<input type="radio" name="astColor" value="primary" checked> 原色小行星';
+            const labelBlue = document.createElement('label'); labelBlue.style.cssText = 'cursor:pointer; display:flex; align-items:center; gap:5px; color:#4fa3ff; font-size:14px;'; labelBlue.innerHTML = '<input type="radio" name="astColor" value="blue"> 蓝色小行星';
+            colorWrap.appendChild(labelPrimary); colorWrap.appendChild(labelBlue);
+            const btnWrap = document.createElement('div');
+            const btnCancel = document.createElement('button'); btnCancel.innerText = '取消'; btnCancel.style.cssText = 'background:rgba(255,255,255,0.05);border:1px solid #666;color:#ccc;padding:8px 15px;cursor:pointer;margin:0 5px;border-radius:4px;transition:all 0.3s;';
+            const btnOk = document.createElement('button'); btnOk.innerText = '确认注入'; btnOk.style.cssText = 'background:rgba(197,160,89,0.2);border:1px solid #c5a059;color:#c5a059;padding:8px 15px;cursor:pointer;margin:0 5px;border-radius:4px;transition:all 0.3s;';
+            btnWrap.appendChild(btnCancel); btnWrap.appendChild(btnOk); box.appendChild(msg); box.appendChild(input); box.appendChild(colorWrap); box.appendChild(btnWrap);
+            overlay.appendChild(box); document.body.appendChild(overlay); input.focus();
+            
+            function close(submit) { 
+                if (!overlay.parentNode) return;
+                let text = input.value; let checkedColor = document.querySelector('input[name="astColor"]:checked'); let isBlue = checkedColor ? checkedColor.value === 'blue' : false;
+                document.body.removeChild(overlay); if (!submit || !text) return;
+                
                 if (customAsteroids.length >= CONFIG.MAX_ASTEROIDS) {
-                    const oldAst = customAsteroids.shift();
-                    particles.remove(oldAst);
-                    if (oldAst.userData.label && oldAst.userData.label.parentNode) oldAst.userData.label.parentNode.removeChild(oldAst.userData.label);
-                    deepDisposeObject(oldAst); // 使用深度内存清理
+                    const oldAst = customAsteroids.shift(); particles.remove(oldAst);
+                    if (oldAst.userData.label && oldAst.userData.label.parentNode) oldAst.userData.label.parentNode.removeChild(oldAst.userData.label); deepDisposeObject(oldAst); 
                 }
                 const R = CONFIG.PLANET_RADIUS; const rr = R * (1.6 + Math.random() * 0.6); const th = Math.random() * Math.PI * 2; const speed = 8.0 / Math.sqrt(rr); 
-                
-                const geo = new THREE.IcosahedronGeometry(0.6, 0);
-                const mat = new THREE.MeshBasicMaterial({ color: 0xc5a059, wireframe: true, transparent: true, opacity: 0.9 });
-                const mesh = new THREE.Mesh(geo, mat);
-                
-                const label = document.createElement('div'); label.className = 'asteroid-label'; label.innerText = text; document.body.appendChild(label);
-                
-                const colorIdx = Math.floor(Math.random() * heartTextures.length);
-                mesh.userData = {
-                    basex: rr * Math.cos(th), basey: (Math.random() - 0.5) * 0.2, basez: rr * Math.sin(th),
-                    speed: speed, origSpeed: speed, label: label,
-                    escapeState: 0, escapeTimer: 0, angleOffset: 0,
-                    trailColor: heartColors[colorIdx][1] // 拖尾颜色绑定
-                };
-
-                const hGeo = new THREE.BufferGeometry(); const hCount = 20; const hPos = new Float32Array(hCount * 3); const hVels = [];
-                for(let i=0; i<hCount; i++) {
-                    hPos[i*3] = 0; hPos[i*3+1] = 0; hPos[i*3+2] = 0;
-                    hVels.push({ vx: (Math.random()-0.5)*0.08, vy: Math.random()*0.04 + 0.02, vz: (Math.random()-0.5)*0.08, life: Math.random() });
-                }
-                hGeo.setAttribute('position', new THREE.BufferAttribute(hPos, 3));
-                const hMat = new THREE.PointsMaterial({ map: heartTextures[colorIdx], size: 2.0, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending });
-                const hPoints = new THREE.Points(hGeo, hMat);
-                mesh.add(hPoints); mesh.userData.heartPoints = hPoints; mesh.userData.heartVels = hVels;
-                
-                particles.add(mesh); customAsteroids.push(mesh);
-                customToast("✅ 注入成功！请放大画面在光环中寻找它。");
-            });
+                const geo = new THREE.IcosahedronGeometry(0.6, 0); const meshColor = isBlue ? 0x4fa3ff : 0xc5a059; const mat = new THREE.MeshBasicMaterial({ color: meshColor, wireframe: true, transparent: true, opacity: 0.9 }); const mesh = new THREE.Mesh(geo, mat);
+                const label = document.createElement('div'); label.className = 'asteroid-label'; label.innerText = text; if(isBlue) { label.style.color = '#e0f0ff'; label.style.borderColor = 'rgba(79, 163, 255, 0.6)'; } document.body.appendChild(label);
+                let colorIdx = isBlue ? 1 : Math.floor(Math.random() * heartTextures.length); if (!isBlue && colorIdx === 1) colorIdx = 2; 
+                mesh.userData = { basex: rr * Math.cos(th), basey: (Math.random() - 0.5) * 0.2, basez: rr * Math.sin(th), speed: speed, origSpeed: speed, label: label, escapeState: 0, escapeTimer: 0, angleOffset: 0, trailColor: heartColors[colorIdx][1], isBlue: isBlue };
+                const hGeo = new THREE.BufferGeometry(); const hCount = 20; const hPos = new Float32Array(hCount * 3); const hVels = []; for(let i=0; i<hCount; i++) { hPos[i*3] = 0; hPos[i*3+1] = 0; hPos[i*3+2] = 0; hVels.push({ vx: (Math.random()-0.5)*0.08, vy: Math.random()*0.04 + 0.02, vz: (Math.random()-0.5)*0.08, life: Math.random() }); }
+                hGeo.setAttribute('position', new THREE.BufferAttribute(hPos, 3)); const hMat = new THREE.PointsMaterial({ map: heartTextures[colorIdx], size: 2.0, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending }); const hPoints = new THREE.Points(hGeo, hMat); mesh.add(hPoints); mesh.userData.heartPoints = hPoints; mesh.userData.heartVels = hVels;
+                particles.add(mesh); customAsteroids.push(mesh); customToast("✅ 注入成功！");
+            }
+            btnOk.onclick = () => close(true); btnCancel.onclick = () => close(false); input.addEventListener('keydown', (e) => { if(e.key === 'Enter') { close(true); } if(e.key === 'Escape') { close(false); } });
         }
 
         let scene, camera, renderer, particles, stars, nebula, planetGroup, uniforms, starUniforms;
-        let targetScale = 1.0, targetRotX = 0.4, currentScale = 1.0, currentRotX = 0.4, isHandDetected = false;
-        const videoElement = document.getElementsByClassName('input_video')[0];
-        const statusElement = document.getElementById('status-indicator');
-        const loadingElement = document.getElementById('loading');
-        const particleCountEl = document.getElementById('particle-count-display');
-        const clock = new THREE.Clock(); let lastEt = 0; let autoIdleTime = 0;
+        let targetScale = 1.0, currentScale = 1.0, isHandDetected = false;
+        
+        let targetRotX = 0.4, currentRotX = 0.4; 
+        let targetParticleRotZ = 0.466, currentParticleRotZ = 0.466; 
 
+        const videoElement = document.getElementsByClassName('input_video')[0]; const clock = new THREE.Clock(); let lastEt = 0; let autoIdleTime = 0; 
         const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
         const PARTICLE_COUNT = isMobile ? CONFIG.PARTICLE_COUNT_MOBILE : CONFIG.PARTICLE_COUNT_DESKTOP; 
         
         function initThree() {
-            particleCountEl.innerText = (PARTICLE_COUNT / 10000).toFixed(0) + "万";
-            inputModeEl.innerText = isMobile ? "尝试调用摄像头" : "WebCam";
+            document.getElementById('particle-count-display').innerText = (PARTICLE_COUNT / 10000).toFixed(0) + "万"; document.getElementById('input-mode').innerText = isMobile ? "尝试调用摄像头" : "WebCam";
             const container = document.getElementById('canvas-container');
             scene = new THREE.Scene(); scene.fog = new THREE.FogExp2(0x020202, 0.00015);
-            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 10000); camera.position.z = 100; camera.lookAt(0, 0, 0);
-
-            initSaturn(); initStarfield(); initPlanets();
-            globalTrails = new TrailSystem(scene, CONFIG.TRAIL_MAX_PARTICLES);
-
-            renderer = new THREE.WebGLRenderer({ antialias: !isMobile, alpha: true, powerPreference: "high-performance" });
-            renderer.setSize(window.innerWidth, window.innerHeight); renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobile ? 1.5 : 2));
+            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 10000); camera.position.set(0, 0, 100); camera.lookAt(0, 0, 0);
+            initSaturn(); initStarfield(); initPlanets(); globalTrails = new TrailSystem(scene, CONFIG.TRAIL_MAX_PARTICLES);
+            renderer = new THREE.WebGLRenderer({ antialias: !isMobile, alpha: true, powerPreference: "high-performance" }); renderer.setSize(window.innerWidth, window.innerHeight); renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobile ? 1.5 : 2));
             container.appendChild(renderer.domElement);
-            
-            // 窗口重置防抖机制
-            let resizeTimeout;
-            window.addEventListener('resize', () => { 
-                clearTimeout(resizeTimeout);
-                resizeTimeout = setTimeout(() => {
-                    camera.aspect = window.innerWidth / window.innerHeight; 
-                    camera.updateProjectionMatrix(); 
-                    renderer.setSize(window.innerWidth, window.innerHeight); 
-                }, CONFIG.RESIZE_DEBOUNCE_MS);
-            });
+            let resizeTimeout; window.addEventListener('resize', () => { clearTimeout(resizeTimeout); resizeTimeout = setTimeout(() => { camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); }, CONFIG.RESIZE_DEBOUNCE_MS); });
             animate();
         }
 
@@ -705,270 +410,269 @@
             const geometry = new THREE.BufferGeometry();
             const pos = new Float32Array(PARTICLE_COUNT * 3), cols = new Float32Array(PARTICLE_COUNT * 3), sizes = new Float32Array(PARTICLE_COUNT), opacities = new Float32Array(PARTICLE_COUNT), speeds = new Float32Array(PARTICLE_COUNT), isRings = new Float32Array(PARTICLE_COUNT), rids = new Float32Array(PARTICLE_COUNT);
             const bodyColors = [new THREE.Color('#E3DAC5'), new THREE.Color('#C9A070'), new THREE.Color('#E3DAC5'), new THREE.Color('#B08D55')];
-            const ringColors = { C: new THREE.Color('#2A2520'), B1: new THREE.Color('#CDBFA0'), B2: new THREE.Color('#DCCBBA'), Cas: new THREE.Color('#050505'), A: new THREE.Color('#989085'), F: new THREE.Color('#AFAFA0') };
-            const R = CONFIG.PLANET_RADIUS;
-
+            const ringColors = { C: new THREE.Color('#2A2520'), B1: new THREE.Color('#CDBFA0'), B2: new THREE.Color('#DCCBBA'), Cas: new THREE.Color('#050505'), A: new THREE.Color('#989085'), F: new THREE.Color('#AFAFA0') }; const R = CONFIG.PLANET_RADIUS;
             for(let i = 0; i < PARTICLE_COUNT; i++) {
                 let x, y, z, r, g, b, size, op, sp, ir; rids[i] = Math.random();
                 if (i < PARTICLE_COUNT * 0.25) {
-                    ir = 0.0; sp = 0.0;
-                    const u = Math.random(), v = Math.random(), theta = 2*Math.PI*u, phi = Math.acos(2*v-1);
-                    x = R * Math.sin(phi) * Math.cos(theta); let rawY = R * Math.cos(phi); z = R * Math.sin(phi) * Math.sin(theta); y = rawY * 0.9;
-                    let lat = (rawY/R + 1.0) * 0.5; let idx = Math.floor(lat * 4 + (Math.cos(lat*40.0)*0.8+Math.cos(lat*15.0)*0.4)) % 4; if(idx<0) idx=0;
-                    let c = bodyColors[idx]; r=c.r; g=c.g; b=c.b; size=1.0+Math.random()*0.8; op=0.8;
+                    ir = 0.0; sp = 0.0; const u = Math.random(), v = Math.random(), theta = 2*Math.PI*u, phi = Math.acos(2*v-1); x = R * Math.sin(phi) * Math.cos(theta); let rawY = R * Math.cos(phi); z = R * Math.sin(phi) * Math.sin(theta); y = rawY * 0.9;
+                    let lat = (rawY/R + 1.0) * 0.5; let idx = Math.floor(lat * 4 + (Math.cos(lat*40.0)*0.8+Math.cos(lat*15.0)*0.4)) % 4; if(idx<0) idx=0; let c = bodyColors[idx]; r=c.r; g=c.g; b=c.b; size=1.0+Math.random()*0.8; op=0.8;
                 } else {
                     ir = 1.0; let zr = Math.random(), rr, rc;
-                    if (zr < 0.15) { rr=R*(1.235+Math.random()*0.29); rc=ringColors.C; size=0.5; op=0.3; }
-                    else if (zr < 0.65) { let t=Math.random(); rr=R*(1.525+t*0.425); rc=ringColors.B1.clone().lerp(ringColors.B2, t); size=0.8+Math.random()*0.6; op=0.85; if(Math.sin(rr*2.0)>0.8) op*=1.2; }
-                    else if (zr < 0.69) { rr=R*(1.95+Math.random()*0.075); rc=ringColors.Cas; size=0.3; op=0.1; }
-                    else if (zr < 0.99) { rr=R*(2.025+Math.random()*0.245); rc=ringColors.A; size=0.7; op=0.6; if(rr>R*2.2 && rr<R*2.21) op=0.1; }
-                    else { rr=R*(2.32+Math.random()*0.02); rc=ringColors.F; size=1.0; op=0.7; }
-                    let th = Math.random()*Math.PI*2; x=rr*Math.cos(th); z=rr*Math.sin(th); y=(Math.random()-0.5)*(rr>R*2.3?0.4:0.15);
-                    r=rc.r; g=rc.g; b=rc.b; sp=8.0/Math.sqrt(rr);
+                    if (zr < 0.15) { rr=R*(1.235+Math.random()*0.29); rc=ringColors.C; size=0.5; op=0.3; } else if (zr < 0.65) { let t=Math.random(); rr=R*(1.525+t*0.425); rc=ringColors.B1.clone().lerp(ringColors.B2, t); size=0.8+Math.random()*0.6; op=0.85; if(Math.sin(rr*2.0)>0.8) op*=1.2; } else if (zr < 0.69) { rr=R*(1.95+Math.random()*0.075); rc=ringColors.Cas; size=0.3; op=0.1; } else if (zr < 0.99) { rr=R*(2.025+Math.random()*0.245); rc=ringColors.A; size=0.7; op=0.6; if(rr>R*2.2 && rr<R*2.21) op=0.1; } else { rr=R*(2.32+Math.random()*0.02); rc=ringColors.F; size=1.0; op=0.7; }
+                    let th = Math.random()*Math.PI*2; x=rr*Math.cos(th); z=rr*Math.sin(th); y=(Math.random()-0.5)*(rr>R*2.3?0.4:0.15); r=rc.r; g=rc.g; b=rc.b; sp=8.0/Math.sqrt(rr);
                 }
                 pos[i*3]=x; pos[i*3+1]=y; pos[i*3+2]=z; cols[i*3]=r; cols[i*3+1]=g; cols[i*3+2]=b; sizes[i]=size; opacities[i]=op; speeds[i]=sp; isRings[i]=ir;
             }
             geometry.setAttribute('position', new THREE.BufferAttribute(pos, 3)); geometry.setAttribute('customColor', new THREE.BufferAttribute(cols, 3)); geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1)); geometry.setAttribute('opacityAttr', new THREE.BufferAttribute(opacities, 1)); geometry.setAttribute('orbitSpeed', new THREE.BufferAttribute(speeds, 1)); geometry.setAttribute('isRing', new THREE.BufferAttribute(isRings, 1)); geometry.setAttribute('aRandomId', new THREE.BufferAttribute(rids, 1));
-
-            uniforms = { uTime: { value: 0 }, uScale: { value: 1.0 }, uRotationX: { value: 0.4 }, uHeartMorph: { value: 0.0 } };
+            
+            uniforms = { uTime: { value: 0 }, uRingTime: { value: 0 }, uScale: { value: 1.0 }, uRotationX: { value: 0.4 }, uHeartMorph: { value: 0.0 }, uLotteryState: { value: 0.0 }, uLeaveProgress: { value: 0.0 }, uEnterProgress: { value: 0.0 }, uDecelAngle: { value: 0.0 }, uBreakAngle: { value: 0.0 } };
             const mat = new THREE.ShaderMaterial({ depthWrite: false, blending: THREE.AdditiveBlending, vertexColors: true, uniforms: uniforms, vertexShader: document.getElementById('vertexshader').textContent, fragmentShader: document.getElementById('fragmentshader').textContent, transparent: true });
-            particles = new THREE.Points(geometry, mat); particles.rotation.z = 0.466; scene.add(particles);
+            particles = new THREE.Points(geometry, mat); particles.rotation.z = currentParticleRotZ; scene.add(particles);
         }
 
         function initStarfield() {
-            const sc = isMobile ? 15000 : 50000; const geo = new THREE.BufferGeometry(), pos = new Float32Array(sc*3), cols = new Float32Array(sc*3), sz = new Float32Array(sc);
-            const colors = [new THREE.Color('#9bb0ff'), new THREE.Color('#ffffff'), new THREE.Color('#ffcc6f'), new THREE.Color('#ff7b7b')];
-            for(let i=0; i<sc; i++) {
-                let r=400+Math.random()*3000, th=Math.random()*Math.PI*2, ph=Math.acos(2*Math.random()-1);
-                pos[i*3]=r*Math.sin(ph)*Math.cos(th); pos[i*3+1]=r*Math.cos(ph); pos[i*3+2]=r*Math.sin(ph)*Math.sin(th);
-                let ct=Math.random(), c=(ct>0.9?colors[0]:(ct>0.6?colors[1]:(ct>0.3?colors[2]:colors[3])));
-                cols[i*3]=c.r; cols[i*3+1]=c.g; cols[i*3+2]=c.b; sz[i]=1.0+Math.random()*3.0;
-            }
-            geo.setAttribute('position', new THREE.BufferAttribute(pos, 3)); geo.setAttribute('customColor', new THREE.BufferAttribute(cols, 3)); geo.setAttribute('size', new THREE.BufferAttribute(sz, 1));
+            const sc = isMobile ? 15000 : 50000; const geo = new THREE.BufferGeometry(), pos = new Float32Array(sc*3), cols = new Float32Array(sc*3), sz = new Float32Array(sc); const colors = [new THREE.Color('#9bb0ff'), new THREE.Color('#ffffff'), new THREE.Color('#ffcc6f'), new THREE.Color('#ff7b7b')];
+            for(let i=0; i<sc; i++) { let r=400+Math.random()*3000, th=Math.random()*Math.PI*2, ph=Math.acos(2*Math.random()-1); pos[i*3]=r*Math.sin(ph)*Math.cos(th); pos[i*3+1]=r*Math.cos(ph); pos[i*3+2]=r*Math.sin(ph)*Math.sin(th); let ct=Math.random(), c=(ct>0.9?colors[0]:(ct>0.6?colors[1]:(ct>0.3?colors[2]:colors[3]))); cols[i*3]=c.r; cols[i*3+1]=c.g; cols[i*3+2]=c.b; sz[i]=1.0+Math.random()*3.0; }
+            geo.setAttribute('position', new THREE.BufferAttribute(pos, 3)); geo.setAttribute('customColor', new THREE.BufferAttribute(cols, 3)); geo.setAttribute('size', new THREE.BufferAttribute(sz, 1)); 
             starUniforms = { uTime: { value: 0 } };
             stars = new THREE.Points(geo, new THREE.ShaderMaterial({ uniforms: starUniforms, vertexShader: document.getElementById('starVertexShader').textContent, fragmentShader: document.getElementById('starFragmentShader').textContent, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending })); scene.add(stars);
         }
 
         function initPlanets() {
-            planetGroup = new THREE.Group(); scene.add(planetGroup);
-            const vS = document.getElementById('planetVertexShader').textContent, fS = document.getElementById('planetFragmentShader').textContent;
+            planetGroup = new THREE.Group(); scene.add(planetGroup); const vS = document.getElementById('planetVertexShader').textContent, fS = document.getElementById('planetFragmentShader').textContent;
             const mkP = (c1,c2,ns,p,r,a) => { const segs = isMobile ? 32 : 48; const m = new THREE.Mesh(new THREE.SphereGeometry(r,segs,segs), new THREE.ShaderMaterial({ uniforms:{color1:{value:c1},color2:{value:c2},noiseScale:{value:ns},lightDir:{value:new THREE.Vector3(1,0.5,1)},atmosphere:{value:a}}, vertexShader:vS, fragmentShader:fS })); m.position.set(p.x,p.y,p.z); planetGroup.add(m); };
             mkP(new THREE.Color('#b33a00'), new THREE.Color('#d16830'), 8.0, {x:-300,y:120,z:-450}, 10, 0.3); mkP(new THREE.Color('#001e4d'), new THREE.Color('#ffffff'), 5.0, {x:380,y:-100,z:-600}, 14, 0.6); mkP(new THREE.Color('#666666'), new THREE.Color('#aaaaaa'), 15.0, {x:-180,y:-220,z:-350}, 6, 0.1);
         }
 
+        function forceExitLottery() {
+            lotteryState = 0; lotteryTimer = 0; isLotteryGestureActive = false; 
+            targetRotX = 0.4; targetParticleRotZ = 0.466; targetScale = 1.0;
+            uniforms.uLotteryState.value = 0.0;
+            document.getElementById('lottery-exit-hint').style.display = 'none'; document.getElementById('lottery-copy-text').style.display = 'none'; document.getElementById('lottery-result-container').style.display = 'none';
+            planetGroup.position.set(0, 0, 0); planetGroup.scale.set(1, 1, 1);
+            customAsteroids.forEach(a => { a.visible = true; a.material.opacity = 0.9; a.scale.setScalar(currentScale); });
+            document.getElementById('orbit-status').innerText = "稳定"; document.getElementById('orbit-status').style.color = "#c5a059";
+        }
+
+        // ================= 【核心解算公式】 JS 小行星绝对同步器 =================
+        function computeLotteryPos(basex, basez, basey, orbitSpeed, angleOffset) {
+            let R = Math.hypot(basex, basez);
+            let baseTh = Math.atan2(basez, basex);
+            let animTh = baseTh + uRingTime * orbitSpeed * 0.2;
+            
+            if (lotteryState <= 2) {
+                return new THREE.Vector3(R * Math.cos(animTh), basey, R * Math.sin(animTh));
+            }
+            
+            if (lotteryState === 3) {
+                let d = (lotteryBreakAngle - animTh) % (2 * Math.PI); if (d < 0) d += 2 * Math.PI;
+                if (lotteryLeaveProgress > d * R) {
+                    return new THREE.Vector3(R * Math.cos(lotteryBreakAngle) + (lotteryLeaveProgress - d * R), basey, R * Math.sin(lotteryBreakAngle));
+                } else {
+                    // 顺时针离开，角度增大 (+)
+                    return new THREE.Vector3(R * Math.cos(animTh + lotteryLeaveProgress / R), basey, R * Math.sin(animTh + lotteryLeaveProgress / R));
+                }
+            }
+            
+            let d = (lotteryBreakAngle - animTh) % (2 * Math.PI); if (d < 0) d += 2 * Math.PI;
+            let OFFSET = 400.0;
+            let totalProgress = lotteryEnterProgress + lotteryDecelAngle * R;
+            let distToHit = OFFSET + d * R;
+            
+            if (totalProgress > distToHit) {
+                // 逆时针进入，角度减小 (-)
+                let newPhi = -1.5707963 - (totalProgress - distToHit) / R;
+                return new THREE.Vector3(R * Math.cos(newPhi), basey, R * Math.sin(newPhi));
+            } else {
+                return new THREE.Vector3(distToHit - totalProgress, basey, -R);
+            }
+        }
+
         function animate() {
-            requestAnimationFrame(animate);
-            const et = clock.getElapsedTime(); const delta = et - lastEt; lastEt = et;
+            requestAnimationFrame(animate); const et = clock.getElapsedTime(); const delta = Math.min(et - lastEt, 0.1); lastEt = et;
             uniforms.uTime.value = et; starUniforms.uTime.value = et;
+            
             if(stars) stars.rotation.y = et*0.005; 
-            if(planetGroup) { planetGroup.children.forEach((p,i)=>p.rotation.y=et*(0.05+i*0.02)); planetGroup.rotation.y=Math.sin(et*0.05)*0.02; }
+            if(planetGroup && lotteryState < 3) { planetGroup.children.forEach((p,i)=>p.rotation.y=et*(0.05+i*0.02)); planetGroup.rotation.y=Math.sin(et*0.05)*0.02; }
             if (globalTrails) globalTrails.update(delta);
 
-            // --- 核心逻辑更新：形变、逃逸状态机、心形判断 ---
-            currentHeartMorph += (targetHeartMorph - currentHeartMorph) * 0.05;
-            uniforms.uHeartMorph.value = currentHeartMorph;
-
-            if (isTwoHandHeart && customAsteroids.length > 0) {
-                heartGestureTimer += delta;
-                targetRotX = Math.PI / 2; // 俯视
-                targetScale = 1.4; // 适当缩放
-                targetHeartMorph = 1.0; // 心形形变
-                
-                if (heartGestureTimer >= 3.0 && escapeQueue.length === 0 && !isRecovering) {
-                    customAsteroids.forEach(a => { if (a.userData.escapeState === 0) escapeQueue.push(a); });
-                    escapeQueue.sort(() => Math.random() - 0.5); // 打乱队列
-                }
+            if (lotteryState === 0) {
+                uRingTime += delta; 
+                if (isLotteryGestureActive) {
+                    lotteryGestureHoldTimer += delta; document.getElementById('orbit-status').innerText = "锁定抽奖中..."; document.getElementById('orbit-status').style.color = "#4fa3ff";
+                    if (lotteryGestureHoldTimer >= 3.0) {
+                        lotteryState = 1; lotteryTimer = 0; 
+                        targetRotX = Math.PI / 2; targetParticleRotZ = 0; targetScale = 1.0; 
+                        document.getElementById('lottery-exit-hint').style.display = 'block'; document.getElementById('orbit-status').innerText = "系统抽奖运转中";
+                    }
+                } else { lotteryGestureHoldTimer = 0; document.getElementById('orbit-status').innerText = "稳定"; document.getElementById('orbit-status').style.color = "#c5a059"; }
             } else {
-                heartGestureTimer = 0;
-            }
-
-            let anyEscaping = customAsteroids.some(a => a.userData.escapeState > 0);
-            let shouldRecover = false;
-            
-            if (!isTwoHandHeart || customAsteroids.length === 0) {
-                if (anyEscaping) {
-                    noHeartTimer += delta;
-                    if (noHeartTimer > 0.0 && noHeartTimer < delta * 1.5) customToast("检测到小行星数量归零或无双手比心手势,5.20秒后恢复原样!");
-                    if (noHeartTimer >= 5.20) shouldRecover = true;
-                } else {
-                    targetHeartMorph = 0.0;
-                    if (!isHandDetected) {
-                        autoIdleTime += delta;
-                        targetScale = 1.0 + Math.sin(autoIdleTime) * 0.2; targetRotX = 0.4 + Math.sin(autoIdleTime * 0.3) * 0.15;
-                        statusElement.innerHTML = "系统状态: 自动巡航<br>输入信号: 等待中..."; statusElement.style.color = "#666";
-                    } else {
-                        statusElement.innerHTML = "系统状态: 手动接管<br>输入信号: <span class='highlight'>已锁定</span>"; statusElement.style.color = "#c5a059";
+                lotteryTimer += delta;
+                if (lotteryState === 1) { 
+                    uRingTime += delta; uniforms.uLotteryState.value = 1.0;
+                    if (lotteryTimer >= 3.0) { 
+                        lotteryState = 2; lotteryTimer = 0; uniforms.uLotteryState.value = 2.0;
+                        lotteryBreakAngle = -Math.random() * (Math.PI / 2); 
+                        uniforms.uBreakAngle.value = lotteryBreakAngle;
+                    }
+                } else if (lotteryState === 2) { 
+                    uRingTime += delta; // 修复 2：不再在此阶段冻结时间的流逝
+                    if (lotteryTimer >= 1.0) { lotteryState = 3; lotteryTimer = 0; uniforms.uLotteryState.value = 3.0; }
+                } else if (lotteryState === 3) { 
+                    lotteryLeaveProgress = (lotteryTimer / 4.0) * 800.0; uniforms.uLeaveProgress.value = lotteryLeaveProgress;
+                    if (lotteryTimer >= 4.0) { 
+                        lotteryState = 4; lotteryTimer = 0; uniforms.uLotteryState.value = 4.0; 
+                        planetGroup.position.set(0, -100, 0); 
+                    }
+                } else if (lotteryState === 4) { 
+                    lotteryEnterProgress = (lotteryTimer / 4.0) * 800.0; uniforms.uEnterProgress.value = lotteryEnterProgress;
+                    if (lotteryTimer >= 4.0) { 
+                        lotteryState = 5; lotteryTimer = 0; uniforms.uLotteryState.value = 5.0; 
+                        
+                        // 修复 3：彻底抛弃 if (lotteryTimer === delta) 的危险浮点数判断！
+                        // 将状态 5 极易失效的“第一次进入”初始化逻辑，直接提前到状态切换的瞬间执行，100%保证触发！
+                        const blueAsts = customAsteroids.filter(a => a.userData.isBlue);
+                        let candidates = blueAsts.filter(a => !lotteryHistory.includes(a));
+                        if (candidates.length === 0) { candidates = blueAsts; lotteryHistory = []; }
+                        if (candidates.length > 0) {
+                            lotterySelectedAst = candidates[Math.floor(Math.random() * candidates.length)];
+                            lotteryHistory.push(lotterySelectedAst); if (lotteryHistory.length > 2) lotteryHistory.shift();
+                            
+                            let baseTh = Math.atan2(lotterySelectedAst.userData.basez, lotterySelectedAst.userData.basex);
+                            let animTh = baseTh + uRingTime * lotterySelectedAst.userData.origSpeed * 0.2;
+                            let d_ast = (lotteryBreakAngle - animTh) % (2 * Math.PI); if (d_ast < 0) d_ast += 2 * Math.PI;
+                            let R_ast = Math.hypot(lotterySelectedAst.userData.basex, lotterySelectedAst.userData.basez);
+                            
+                            let distToHit = 400.0 + d_ast * R_ast;
+                            let currentAngleOnCircle = (800.0 - distToHit) / R_ast;
+                            
+                            let diff = (-currentAngleOnCircle) % (2 * Math.PI); 
+                            if (diff < 0) diff += 2 * Math.PI;
+                            totalDecelAngle = diff + 4 * Math.PI; 
+                        }
+                        const copyEl = document.getElementById('lottery-copy-text'); currentCopyText = lotteryCopyTexts[Math.floor(Math.random() * lotteryCopyTexts.length)]; copyEl.innerText = currentCopyText; copyEl.style.display = 'block';
+                    }
+                } else if (lotteryState === 5) { 
+                    // 上方的 else if 确保状态 5 的运算只会在下一帧进行，状态机切换更严谨。
+                    lotteryDecelAngle = totalDecelAngle * (1.0 - Math.pow(1.0 - lotteryTimer/3.0, 2)); uniforms.uDecelAngle.value = lotteryDecelAngle;
+                    if (lotteryTimer >= 3.0) { 
+                        lotteryState = 6; lotteryTimer = 0; uniforms.uLotteryState.value = 6.0; 
+                        
+                        // 同样，彻底修复第三个 Bug，将状态 6 的初始化代码直接放进状态切换瞬间触发！
+                        if (lotterySelectedAst) { 
+                            document.getElementById('lottery-copy-text').style.display = 'none';
+                            let textRaw = lotterySelectedAst.userData.label.innerText; let lastDashIdx = textRaw.lastIndexOf('-'); let mainT = textRaw, subT = "";
+                            if (lastDashIdx !== -1) { mainT = textRaw.substring(0, lastDashIdx); subT = textRaw.substring(lastDashIdx); }
+                            document.getElementById('lottery-res-main').innerText = mainT; document.getElementById('lottery-res-sub').innerText = subT; document.getElementById('lottery-res-sub').style.display = subT ? 'block' : 'none';
+                            document.getElementById('lottery-result-container').style.display = 'block';
+                            customAsteroids.forEach(a => { if (a.userData.isBlue && a !== lotterySelectedAst) a.visible = false; });
+                        }
+                    }
+                } else if (lotteryState === 6) { 
+                    if (lotterySelectedAst && document.getElementById('lottery-res-sub').style.display !== 'none') {
+                        let R_ring = 1.6 * CONFIG.PLANET_RADIUS;
+                        let px = R_ring * Math.cos(Math.PI/4) * currentScale;
+                        let py = -R_ring * Math.sin(Math.PI/4) * currentScale;
+                        let anchorWorld = new THREE.Vector3(px, py, 0); anchorWorld.project(camera);
+                        let sx = (anchorWorld.x * 0.5 + 0.5) * window.innerWidth; let sy = -(anchorWorld.y * 0.5 - 0.5) * window.innerHeight;
+                        let resSub = document.getElementById('lottery-res-sub'); resSub.style.left = (sx + 20) + 'px'; resSub.style.top = (sy + 20) + 'px'; resSub.style.right = 'auto'; resSub.style.bottom = 'auto';
                     }
                 }
-            } else { noHeartTimer = 0; }
-
-            if (shouldRecover && !isRecovering) {
-                isRecovering = true; targetHeartMorph = 0.0;
-                customAsteroids.forEach(a => {
-                    if (a.userData.escapeState === 2 || a.userData.escapeState === 3) {
-                        a.userData.escapeState = 4; a.userData.escapeTimer = 0;
-                        let offx = (Math.random() > 0.5 ? 1 : -1) * (300 + Math.random()*200);
-                        let offy = (Math.random() - 0.5) * 200; let offz = (Math.random() - 0.5) * 200;
-                        a.userData.startReturnPos = new THREE.Vector3(offx, offy, offz);
-                        a.position.copy(a.userData.startReturnPos);
-                    }
-                });
-                escapeQueue = [];
             }
 
-            let currentSlowingCount = customAsteroids.filter(a => a.userData.escapeState === 1).length;
-            if (currentSlowingCount === 0 && escapeQueue.length > 0 && !isRecovering) {
-                let batchCount = Math.floor(Math.random() * 3) + 3; // 3-5个
-                for(let i=0; i<batchCount; i++) {
-                    let a = escapeQueue.pop();
-                    if (a) { a.userData.escapeState = 1; a.userData.escapeTimer = 0; a.userData.origSpeed = a.userData.speed; }
-                }
-            }
+            uniforms.uRingTime.value = uRingTime;
+            currentScale += (targetScale - currentScale) * 0.08; uniforms.uScale.value = currentScale; 
+            currentRotX += (targetRotX - currentRotX) * 0.08; uniforms.uRotationX.value = currentRotX;
+            currentParticleRotZ += (targetParticleRotZ - currentParticleRotZ) * 0.08; if(particles) particles.rotation.z = currentParticleRotZ;
 
-            currentScale += (targetScale - currentScale) * 0.08; currentRotX += (targetRotX - currentRotX) * 0.08;
-            uniforms.uScale.value = currentScale; uniforms.uRotationX.value = currentRotX;
-
+            // ================= 同步并渲染所有小行星 =================
+            currentHeartMorph += (targetHeartMorph - currentHeartMorph) * 0.05; uniforms.uHeartMorph.value = currentHeartMorph;
             customAsteroids.forEach(ast => {
-                let state = ast.userData.escapeState; ast.userData.escapeTimer += delta;
-                let baseTh = Math.atan2(ast.userData.basez, ast.userData.basex); let r_circ = Math.hypot(ast.userData.basex, ast.userData.basez);
-                
-                if (state === 0) {
-                    ast.userData.angleOffset += delta * ast.userData.speed * 0.2; ast.material.opacity = 0.9;
-                } else if (state === 1) { // 减速变亮
-                    let t = Math.min(ast.userData.escapeTimer / 2.0, 1.0);
-                    ast.userData.speed = ast.userData.origSpeed * (1.0 - t); // 速度降为0
-                    ast.userData.angleOffset += delta * ast.userData.speed * 0.2;
-                    ast.material.opacity = 0.9 + t * 1.5; // 变亮
-                    if (t >= 1.0) {
-                        ast.userData.escapeState = 2; ast.userData.escapeTimer = 0;
-                        ast.userData.flyDir = new THREE.Vector3(1, (Math.random()-0.5)*0.2, (Math.random()-0.5)*0.2).normalize();
+                if (!ast.visible) { ast.userData.label.style.opacity = 0; return; }
+                let R = Math.hypot(ast.userData.basex, ast.userData.basez);
+
+                if (lotteryState > 0) {
+                    if (lotteryState === 6 && ast === lotterySelectedAst) {
+                        ast.scale.setScalar(currentScale * 2.5); ast.position.set(0, R * currentScale, 0); 
+                        ast.userData.label.style.opacity = 0; 
+                    } else if (ast.userData.isBlue) {
+                        ast.scale.setScalar(currentScale); ast.material.opacity = 0.9;
+                        let syncPos = computeLotteryPos(ast.userData.basex, ast.userData.basez, ast.userData.basey, ast.userData.origSpeed, ast.userData.angleOffset);
+                        
+                        let cx = Math.cos(currentRotX), sx = Math.sin(currentRotX);
+                        let ry = syncPos.y * cx - syncPos.z * sx; let rz = syncPos.y * sx + syncPos.z * cx;
+                        ast.position.set(syncPos.x * currentScale, ry * currentScale, rz * currentScale);
+                    } else {
+                        let baseTh = Math.atan2(ast.userData.basez, ast.userData.basex);
+                        let animTh = baseTh + uRingTime * ast.userData.origSpeed * 0.2;
+                        ast.material.opacity = 0.15; 
+                        let cx = Math.cos(currentRotX), sx = Math.sin(currentRotX);
+                        let rz_orig = R * Math.sin(animTh);
+                        let ry = ast.userData.basey * cx - rz_orig * sx; let rz = ast.userData.basey * sx + rz_orig * cx;
+                        ast.position.set(R * Math.cos(animTh) * currentScale, ry * currentScale, rz * currentScale);
                     }
-                } else if (state === 2) { // 飞出 (向右由慢到快)
-                    let t = ast.userData.escapeTimer; let speed = t * 150.0;
-                    ast.position.addScaledVector(ast.userData.flyDir, speed * delta);
-                    globalTrails.addPoint(ast.position, ast.userData.trailColor);
-                    if (ast.position.x > 300) { ast.userData.escapeState = 3; triggerDanmaku(ast.userData.label.innerText); }
-                } else if (state === 4) { // 飞回
-                    let t = Math.min(ast.userData.escapeTimer / 2.0, 1.0);
-                    ast.userData.angleOffset += delta * ast.userData.origSpeed * (1.0-t) * 0.2;
-                    
-                    let animTh = baseTh + ast.userData.angleOffset;
-                    let cx_c = Math.cos(animTh)*r_circ, cz_c = Math.sin(animTh)*r_circ;
-                    let hx = Math.pow(Math.sin(animTh), 3.0), hz = -(13.0*Math.cos(animTh)-5.0*Math.cos(2.0*animTh)-2.0*Math.cos(3.0*animTh)-Math.cos(4.0*animTh))/16.0;
-                    let finalX = cx_c * (1-currentHeartMorph) + hx*r_circ*1.2 * currentHeartMorph;
-                    let finalZ = cz_c * (1-currentHeartMorph) + hz*r_circ*1.2 * currentHeartMorph;
-                    
-                    let rx = Math.cos(currentRotX), sx = Math.sin(currentRotX);
-                    let ry = ast.userData.basey * rx - finalZ * sx, rz = ast.userData.basey * sx + finalZ * rx;
-                    let targetWorldPos = new THREE.Vector3(finalX * currentScale, ry * currentScale, rz * currentScale);
-                    
-                    let easeOut = 1 - Math.pow(1 - t, 5); // 飞回由快到慢
-                    ast.position.lerpVectors(ast.userData.startReturnPos, targetWorldPos, easeOut);
-                    globalTrails.addPoint(ast.position, ast.userData.trailColor);
-                    ast.material.opacity = 2.4 - t * 1.5; 
-                    
-                    if (t >= 1.0) { ast.userData.escapeState = 0; ast.userData.speed = ast.userData.origSpeed; }
-                }
-                
-                // 普通与减速状态下跟随轨道变换
-                if (state === 0 || state === 1) {
-                    let animTh = baseTh + ast.userData.angleOffset;
-                    let circX = Math.cos(animTh) * r_circ; let circZ = Math.sin(animTh) * r_circ;
-                    let hx = Math.pow(Math.sin(animTh), 3.0); let hz = -(13.0*Math.cos(animTh)-5.0*Math.cos(2.0*animTh)-2.0*Math.cos(3.0*animTh)-Math.cos(4.0*animTh))/16.0;
-                    let finalX = circX * (1 - currentHeartMorph) + (hx * r_circ * 1.2) * currentHeartMorph;
-                    let finalZ = circZ * (1 - currentHeartMorph) + (hz * r_circ * 1.2) * currentHeartMorph;
-                    
-                    let cx = Math.cos(currentRotX), sx = Math.sin(currentRotX);
-                    let ry = ast.userData.basey * cx - finalZ * sx; let rz = ast.userData.basey * sx + finalZ * cx;
-                    ast.position.set(finalX * currentScale, ry * currentScale, rz * currentScale);
-                }
-                
-                ast.scale.setScalar(currentScale); 
-                if (currentScale > 1.2 && state !== 3) {
-                    ast.updateMatrixWorld(); let vec = new THREE.Vector3(); vec.setFromMatrixPosition(ast.matrixWorld); vec.project(camera);
-                    if (vec.z > 1.0 || vec.z < -1.0) { ast.userData.label.style.opacity = 0; } else {
-                        let screenX = (vec.x * 0.5 + 0.5) * window.innerWidth; let screenY = -(vec.y * 0.5 - 0.5) * window.innerHeight;
-                        ast.userData.label.style.transform = `translate(-50%, -100%) translate(${screenX}px, ${screenY - 20}px)`; ast.userData.label.style.opacity = 1;
+                    ast.userData.label.style.opacity = 0; 
+                } else {
+                    let state = ast.userData.escapeState; ast.userData.escapeTimer += delta; ast.scale.setScalar(currentScale);
+                    if (state === 0) { ast.userData.angleOffset += delta * ast.userData.speed * 0.2; ast.material.opacity = 0.9; } 
+                    else if (state === 1) { let t = Math.min(ast.userData.escapeTimer / 2.0, 1.0); ast.userData.speed = ast.userData.origSpeed * (1.0 - t); ast.userData.angleOffset += delta * ast.userData.speed * 0.2; ast.material.opacity = 0.9 + t * 1.5; if (t >= 1.0) { ast.userData.escapeState = 2; ast.userData.escapeTimer = 0; ast.userData.flyDir = new THREE.Vector3(1, (Math.random()-0.5)*0.2, (Math.random()-0.5)*0.2).normalize(); } } 
+                    else if (state === 2) { let t = ast.userData.escapeTimer; let speed = t * 150.0; ast.position.addScaledVector(ast.userData.flyDir, speed * delta); globalTrails.addPoint(ast.position, ast.userData.trailColor); if (ast.position.x > 300) { ast.userData.escapeState = 3; triggerDanmaku(ast.userData.label.innerText); } } 
+                    else if (state === 4) { 
+                        let t = Math.min(ast.userData.escapeTimer / 2.0, 1.0); ast.userData.angleOffset += delta * ast.userData.origSpeed * (1.0-t) * 0.2; let animTh = Math.atan2(ast.userData.basez, ast.userData.basex) + ast.userData.angleOffset; let cx_c = Math.cos(animTh)*R, cz_c = Math.sin(animTh)*R; let hx = Math.pow(Math.sin(animTh), 3.0), hz = -(13.0*Math.cos(animTh)-5.0*Math.cos(2.0*animTh)-2.0*Math.cos(3.0*animTh)-Math.cos(4.0*animTh))/16.0; let finalX = cx_c * (1-currentHeartMorph) + hx*R*1.2 * currentHeartMorph; let finalZ = cz_c * (1-currentHeartMorph) + hz*R*1.2 * currentHeartMorph; let rx = Math.cos(currentRotX), sx = Math.sin(currentRotX); let ry = ast.userData.basey * rx - finalZ * sx, rz = ast.userData.basey * sx + finalZ * rx; let targetWorldPos = new THREE.Vector3(finalX * currentScale, ry * currentScale, rz * currentScale); let easeOut = 1 - Math.pow(1 - t, 5); 
+                        // 修复 1：将回归缓动坐标系的底坐标，从动态的 ast.position 改为固定的 ast.userData.startReturnPos，彻底解决瞬移。
+                        ast.position.set(THREE.MathUtils.lerp(ast.userData.startReturnPos.x, targetWorldPos.x, easeOut), THREE.MathUtils.lerp(ast.userData.startReturnPos.y, targetWorldPos.y, easeOut), THREE.MathUtils.lerp(ast.userData.startReturnPos.z, targetWorldPos.z, easeOut)); globalTrails.addPoint(ast.position, ast.userData.trailColor); ast.material.opacity = 2.4 - t * 1.5; if (t >= 1.0) { ast.userData.escapeState = 0; ast.userData.speed = ast.userData.origSpeed; } 
                     }
-                } else { ast.userData.label.style.opacity = 0; }
+                    
+                    if (state === 0 || state === 1) {
+                        let animTh = Math.atan2(ast.userData.basez, ast.userData.basex) + ast.userData.angleOffset; let circX = Math.cos(animTh) * R; let circZ = Math.sin(animTh) * R; let hx = Math.pow(Math.sin(animTh), 3.0); let hz = -(13.0*Math.cos(animTh)-5.0*Math.cos(2.0*animTh)-2.0*Math.cos(3.0*animTh)-Math.cos(4.0*animTh))/16.0; let finalX = circX * (1 - currentHeartMorph) + (hx * R * 1.2) * currentHeartMorph; let finalZ = circZ * (1 - currentHeartMorph) + (hz * R * 1.2) * currentHeartMorph; let cx = Math.cos(currentRotX), sx = Math.sin(currentRotX); let ry = ast.userData.basey * cx - finalZ * sx; let rz = ast.userData.basey * sx + finalZ * cx; ast.position.set(finalX * currentScale, ry * currentScale, rz * currentScale);
+                    }
+                    if (currentScale > 1.2 && state !== 3) { ast.updateMatrixWorld(); let vec = new THREE.Vector3(); vec.setFromMatrixPosition(ast.matrixWorld); vec.project(camera); if (vec.z > 1.0 || vec.z < -1.0) { ast.userData.label.style.opacity = 0; } else { let screenX = (vec.x * 0.5 + 0.5) * window.innerWidth; let screenY = -(vec.y * 0.5 - 0.5) * window.innerHeight; ast.userData.label.style.transform = `translate(-50%, -100%) translate(${screenX}px, ${screenY - 20}px)`; ast.userData.label.style.opacity = 1; } } else { ast.userData.label.style.opacity = 0; }
+                }
 
                 if (ast.userData.heartPoints) {
                     const hPoints = ast.userData.heartPoints; const hVels = ast.userData.heartVels; const positions = hPoints.geometry.attributes.position.array;
-                    if (isHeartGesture || isTwoHandHeart) {
-                        hPoints.material.opacity = Math.min(1.0, hPoints.material.opacity + 0.05);
-                        for(let i=0; i<hVels.length; i++) {
-                            hVels[i].life += 0.008; 
-                            if (hVels[i].life > 1.0) { hVels[i].life = 0; positions[i*3] = 0; positions[i*3+1] = 0; positions[i*3+2] = 0; } 
-                            else { positions[i*3] += hVels[i].vx; positions[i*3+1] += hVels[i].vy; positions[i*3+2] += hVels[i].vz; }
-                        }
-                        hPoints.geometry.attributes.position.needsUpdate = true;
-                    } else { hPoints.material.opacity = Math.max(0.0, hPoints.material.opacity - 0.05); }
+                    if (isHeartGesture || isTwoHandHeart) { hPoints.material.opacity = Math.min(1.0, hPoints.material.opacity + 0.05); for(let i=0; i<hVels.length; i++) { hVels[i].life += 0.008; if (hVels[i].life > 1.0) { hVels[i].life = 0; positions[i*3] = 0; positions[i*3+1] = 0; positions[i*3+2] = 0; } else { positions[i*3] += hVels[i].vx; positions[i*3+1] += hVels[i].vy; positions[i*3+2] += hVels[i].vz; } } hPoints.geometry.attributes.position.needsUpdate = true; } else { hPoints.material.opacity = Math.max(0.0, hPoints.material.opacity - 0.05); }
                 }
             });
 
-            if (isRecovering) { let allRecovered = customAsteroids.every(a => a.userData.escapeState === 0); if (allRecovered) { isRecovering = false; noHeartTimer = 0; heartGestureTimer = 0; } }
+            if (lotteryState === 0) {
+                if (isTwoHandHeart && customAsteroids.length > 0) { heartGestureTimer += delta; targetRotX = Math.PI / 2; targetScale = 1.4; targetHeartMorph = 1.0; targetParticleRotZ = 0; if (heartGestureTimer >= 3.0 && escapeQueue.length === 0 && !isRecovering) { customAsteroids.forEach(a => { if (a.userData.escapeState === 0) escapeQueue.push(a); }); escapeQueue.sort(() => Math.random() - 0.5); } } else { heartGestureTimer = 0; }
+                let anyEscaping = customAsteroids.some(a => a.userData.escapeState > 0); let shouldRecover = false;
+                if (!isTwoHandHeart || customAsteroids.length === 0) { if (anyEscaping) { noHeartTimer += delta; if (noHeartTimer >= 5.20) shouldRecover = true; } else { targetHeartMorph = 0.0; targetParticleRotZ = 0.466; if (!isHandDetected) { autoIdleTime += delta; targetScale = 1.0 + Math.sin(autoIdleTime) * 0.2; targetRotX = 0.4 + Math.sin(autoIdleTime * 0.3) * 0.15; document.getElementById('status-indicator').innerHTML = "待机"; } else { document.getElementById('status-indicator').innerHTML = "手动接管"; } } } else { noHeartTimer = 0; }
+                if (shouldRecover && !isRecovering) { isRecovering = true; targetHeartMorph = 0.0; customAsteroids.forEach(a => { if (a.userData.escapeState === 2 || a.userData.escapeState === 3) { a.userData.escapeState = 4; a.userData.escapeTimer = 0; let offx = (Math.random() > 0.5 ? 1 : -1) * (300 + Math.random()*200); let offy = (Math.random() - 0.5) * 200; let offz = (Math.random() - 0.5) * 200; a.userData.startReturnPos = new THREE.Vector3(offx, offy, offz); a.position.copy(a.userData.startReturnPos); } }); escapeQueue = []; }
+                let currentSlowingCount = customAsteroids.filter(a => a.userData.escapeState === 1).length;
+                if (currentSlowingCount === 0 && escapeQueue.length > 0 && !isRecovering) { let batchCount = Math.floor(Math.random() * 3) + 3; for(let i=0; i<batchCount; i++) { let a = escapeQueue.pop(); if (a) { a.userData.escapeState = 1; a.userData.escapeTimer = 0; a.userData.origSpeed = a.userData.speed; } } }
+                if (isRecovering) { let allRecovered = customAsteroids.every(a => a.userData.escapeState === 0); if (allRecovered) { isRecovering = false; noHeartTimer = 0; heartGestureTimer = 0; } }
+            }
             renderer.render(scene, camera);
         }
 
-        // 视觉资源的容错降级
-        const isMediaPipeLoaded = typeof Hands !== 'undefined' && typeof Camera !== 'undefined';
-
-        if (window.isSecureContext === false) {
-            loadingElement.style.display = 'none'; inputModeEl.innerText = "自动巡航 (无安全环境)"; customToast("⚠️ 摄像头手势需在 HTTPS 下运行。");
-        } else if (isMediaPipeLoaded && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-            const hands = new Hands({locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${f}`});
-            hands.setOptions({maxNumHands: 2, modelComplexity: isMobile ? 0 : 1, minDetectionConfidence: 0.7, minTrackingConfidence: 0.7});
-            
-            hands.onResults(res => {
-                loadingElement.style.display = 'none'; 
-                isHeartGesture = false; let detectedTwoHandHeart = false;
+        const isMediaPipeLoaded = typeof Hands !== 'undefined';
+        if (window.isSecureContext === false) { document.getElementById('loading').style.display = 'none'; document.getElementById('input-mode').innerText = "自动巡航 (无安全环境)"; customToast("⚠️ 摄像头手势需在 HTTPS 下运行。"); } 
+        else if (isMediaPipeLoaded && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+            globalHands = new Hands({locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${f}`}); globalHands.setOptions({maxNumHands: 2, modelComplexity: isMobile ? 0 : 1, minDetectionConfidence: 0.7, minTrackingConfidence: 0.7});
+            globalHands.onResults(res => {
+                document.getElementById('loading').style.display = 'none'; isHeartGesture = false; let detectedTwoHandHeart = false;
+                let getDist = (p1, p2) => Math.hypot(p1.x - p2.x, p1.y - p2.y);
+                let isFistPose = (h) => { return getDist(h[8], h[0]) < getDist(h[5], h[0]) && getDist(h[12], h[0]) < getDist(h[9], h[0]) && getDist(h[16], h[0]) < getDist(h[13], h[0]) && getDist(h[20], h[0]) < getDist(h[17], h[0]); };
+                let isThumbUpPose = (h) => { return h[4].y < h[3].y && h[4].y < h[5].y && isFistPose(h); };
+                let isHalfHeartPose = (h) => { return h[4].y > h[3].y && h[8].y > h[6].y && getDist(h[4], h[8]) > 0.1 && !isFistPose(h); };
 
                 if (res.multiHandLandmarks && res.multiHandLandmarks.length > 0) {
-                    isHandDetected = true; 
-
+                    isHandDetected = true; let fistCount = res.multiHandLandmarks.filter(isFistPose).length;
+                    if (fistCount === 2) { forceExitLottery(); } 
                     if (res.multiHandLandmarks.length === 2) {
                         const h1 = res.multiHandLandmarks[0]; const h2 = res.multiHandLandmarks[1];
-                        const indexDist = Math.hypot(h1[8].x - h2[8].x, h1[8].y - h2[8].y);
-                        const thumbDist = Math.hypot(h1[4].x - h2[4].x, h1[4].y - h2[4].y);
-                        if (indexDist < 0.15 && thumbDist < 0.15) detectedTwoHandHeart = true;
-                    }
-
-                    const h = res.multiHandLandmarks[0]; const d = Math.sqrt((h[4].x-h[8].x)**2 + (h[4].y-h[8].y)**2);
-                    
-                    if (detectedTwoHandHeart) {
-                        isTwoHandHeart = true;
-                    } else {
-                        isTwoHandHeart = false;
-                        targetScale = 0.15 + Math.max(0, Math.min(1, (d - 0.02) / 0.25)) * 2.35;
-                        targetRotX = -0.6 + Math.max(0, Math.min(1, (h[9].y - 0.1) / 0.8)) * 1.6;
-                        isHeartGesture = (d < 0.06 && h[12].y > h[10].y && h[16].y > h[14].y);
-                    }
-                } else { isHandDetected = false; isTwoHandHeart = false; }
+                        if (((isThumbUpPose(h1) && isHalfHeartPose(h2)) || (isThumbUpPose(h2) && isHalfHeartPose(h1))) && customAsteroids.length > 0) { isLotteryGestureActive = true; } else { isLotteryGestureActive = false; }
+                        const indexDist = getDist(h1[8], h2[8]); const thumbDist = getDist(h1[4], h2[4]); if (indexDist < 0.15 && thumbDist < 0.15) detectedTwoHandHeart = true;
+                    } else { isLotteryGestureActive = false; }
+                    const h = res.multiHandLandmarks[0]; const d = getDist(h[4], h[8]);
+                    if (detectedTwoHandHeart) { isTwoHandHeart = true; } else { isTwoHandHeart = false; if(lotteryState === 0) { targetScale = 0.15 + Math.max(0, Math.min(1, (d - 0.02) / 0.25)) * 2.35; targetRotX = -0.6 + Math.max(0, Math.min(1, (h[9].y - 0.1) / 0.8)) * 1.6; } isHeartGesture = (d < 0.06 && h[12].y > h[10].y && h[16].y > h[14].y); }
+                } else { isHandDetected = false; isTwoHandHeart = false; isLotteryGestureActive = false; }
             });
-
-            const cam = new Camera(videoElement, {onFrame: async () => await hands.send({image: videoElement}), width: 640, height: 480});
-            
-            let cameraStarted = false;
-            const startTimeout = setTimeout(() => {
-                if(!cameraStarted) {
-                    loadingElement.style.display = 'none'; 
-                    inputModeEl.innerText = "摄像头启动超时"; 
-                    customToast("⚠️ 摄像头加载超时，已降级为自动巡航。");
-                }
-            }, CONFIG.MEDIAPIPE_TIMEOUT_MS);
-
-            cam.start().then(() => {
-                cameraStarted = true;
-                clearTimeout(startTimeout);
-            }).catch(e => { 
-                clearTimeout(startTimeout);
-                loadingElement.style.display = 'none'; inputModeEl.innerText = "无权限"; customToast("⚠️ 无法获取摄像头权限。"); 
-            });
-        } else {
-            loadingElement.style.display = 'none'; 
-            inputModeEl.innerText = "资源或API不支持"; 
-            customToast("⚠️ 核心资源加载失败或设备不支持，已降级为自动巡航。");
-        }
+            const startTimeout = setTimeout(() => { if(!cameraStarted) { document.getElementById('loading').style.display = 'none'; document.getElementById('input-mode').innerText = "摄像头启动超时"; customToast("⚠️ 摄像头加载超时，已降级为自动巡航。"); } }, CONFIG.MEDIAPIPE_TIMEOUT_MS);
+            startCustomCamera();
+        } else { document.getElementById('loading').style.display = 'none'; document.getElementById('input-mode').innerText = "资源或API不支持"; customToast("⚠️ 核心资源加载失败或设备不支持，已降级为自动巡航。"); }
 
         function toggleFullScreen() { if (!document.fullscreenElement) document.documentElement.requestFullscreen(); else if (document.exitFullscreen) document.exitFullscreen(); }
         initThree();
