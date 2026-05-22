@@ -514,7 +514,7 @@
                 uRingTime += delta; 
                 if (isLotteryGestureActive) {
                     lotteryGestureHoldTimer += delta; document.getElementById('orbit-status').innerText = "锁定抽奖中..."; document.getElementById('orbit-status').style.color = "#4fa3ff";
-                    if (lotteryGestureHoldTimer >= 3.0) {
+                    if (lotteryGestureHoldTimer >= 1.0) {
                         lotteryState = 1; lotteryTimer = 0; 
                         targetRotX = Math.PI / 2; targetParticleRotZ = 0; targetScale = 1.0; 
                         document.getElementById('lottery-exit-hint').style.display = 'block'; document.getElementById('orbit-status').innerText = "系统抽奖运转中";
