@@ -101,7 +101,7 @@
         <button class="fullscreen-btn" onclick="toggleFullScreen()"><span class="desktop-text">全屏沉浸体验</span><span class="mobile-icon">⛶</span></button>
     </div>
 
-    <div id="lottery-exit-hint">双手握拳可退出抽奖</div>
+    <div id="lottery-exit-hint">单手握拳即可退出抽奖</div>
     <div id="lottery-copy-text"></div>
     <div id="lottery-result-container">
         <div class="lottery-title" id="lottery-res-title">你抽到的星星是</div>
@@ -654,7 +654,7 @@ const tempColor = new THREE.Color(); // 新增这行，用于复用颜色
                 if (isTwoHandHeart && customAsteroids.length > 0) { heartGestureTimer += delta; targetRotX = Math.PI / 2; targetScale = 1.4; targetHeartMorph = 1.0; targetParticleRotZ = 0; if (heartGestureTimer >= 3.0 && escapeQueue.length === 0 && !isRecovering) { customAsteroids.forEach(a => { if (a.userData.escapeState === 0) escapeQueue.push(a); }); escapeQueue.sort(() => Math.random() - 0.5); } } else { heartGestureTimer = 0; }
                 let anyEscaping = customAsteroids.some(a => a.userData.escapeState > 0); let shouldRecover = false;
                 if (!isTwoHandHeart || customAsteroids.length === 0) { if (anyEscaping) { noHeartTimer += delta; if (noHeartTimer >= 5.20) shouldRecover = true; } else { targetHeartMorph = 0.0; targetParticleRotZ = 0.466; if (!isHandDetected) { autoIdleTime += delta; targetScale = 1.0 + Math.sin(autoIdleTime) * 0.2; targetRotX = 0.4 + Math.sin(autoIdleTime * 0.3) * 0.15; document.getElementById('status-indicator').innerHTML = "待机"; } else { document.getElementById('status-indicator').innerHTML = "手动接管"; } } } else { noHeartTimer = 0; }
-                if (shouldRecover && !isRecovering) { isRecovering = true; targetHeartMorph = 0.0; customAsteroids.forEach(a => { if (a.userData.escapeState === 2 || a.userData.escapeState === 3) { a.userData.escapeState = 4; a.userData.escapeTimer = 0; let offx = (Math.random() > 0.5 ? 1 : -1) * (300 + Math.random()*200); let offy = (Math.random() - 0.5) * 200; let offz = (Math.random() - 0.5) * 200; a.userData.startReturnPos = new THREE.Vector3(offx, offy, offz); a.position.copy(a.userData.startReturnPos); } }); escapeQueue = []; }
+                if (shouldRecover && !isRecovering) { isRecovering = true; targetHeartMorph = 0.0; customAsteroids.forEach(a => { if (a.userData.escapeState > 0) { a.userData.escapeState = 4; a.userData.escapeTimer = 0; a.userData.startReturnPos = a.position.clone(); } }); escapeQueue = []; }
                 let currentSlowingCount = customAsteroids.filter(a => a.userData.escapeState === 1).length;
                 if (currentSlowingCount === 0 && escapeQueue.length > 0 && !isRecovering) { let batchCount = Math.floor(Math.random() * 3) + 3; for(let i=0; i<batchCount; i++) { let a = escapeQueue.pop(); if (a) { a.userData.escapeState = 1; a.userData.escapeTimer = 0; a.userData.origSpeed = a.userData.speed; } } }
                 if (isRecovering) { let allRecovered = customAsteroids.every(a => a.userData.escapeState === 0); if (allRecovered) { isRecovering = false; noHeartTimer = 0; heartGestureTimer = 0; } }
@@ -675,7 +675,7 @@ const tempColor = new THREE.Color(); // 新增这行，用于复用颜色
 
                 if (res.multiHandLandmarks && res.multiHandLandmarks.length > 0) {
                     isHandDetected = true; let fistCount = res.multiHandLandmarks.filter(isFistPose).length;
-                    if (fistCount === 2) { forceExitLottery(); } 
+                    if (fistCount >= 1 && lotteryState > 0) { forceExitLottery(); } 
                     if (res.multiHandLandmarks.length === 2) {
                         const h1 = res.multiHandLandmarks[0]; const h2 = res.multiHandLandmarks[1];
                         if (((isThumbUpPose(h1) && isHalfHeartPose(h2)) || (isThumbUpPose(h2) && isHalfHeartPose(h1))) && customAsteroids.length > 0) { isLotteryGestureActive = true; } else { isLotteryGestureActive = false; }
